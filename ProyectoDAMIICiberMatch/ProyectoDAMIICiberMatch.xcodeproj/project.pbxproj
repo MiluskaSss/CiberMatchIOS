@@ -55,6 +55,7 @@
 		B794869A2CFB5F990085C202 /* APIResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B79486992CFB5F990085C202 /* APIResponse.swift */; };
 		B794869C2CFB601F0085C202 /* MovieListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B794869B2CFB601F0085C202 /* MovieListViewModel.swift */; };
 		B794869E2CFB614A0085C202 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = B794869D2CFB614A0085C202 /* GoogleService-Info.plist */; };
+		B7C2B2012CFF33DC0021F0EE /* SalaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7C2B2002CFF33DC0021F0EE /* SalaView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -73,6 +74,7 @@
 		B79486992CFB5F990085C202 /* APIResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIResponse.swift; sourceTree = "<group>"; };
 		B794869B2CFB601F0085C202 /* MovieListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MovieListViewModel.swift; sourceTree = "<group>"; };
 		B794869D2CFB614A0085C202 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		B7C2B2002CFF33DC0021F0EE /* SalaView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SalaView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -169,6 +171,7 @@
 				B79486472CFB5BDD0085C202 /* MovieListView.swift */,
 				B79486492CFB5BFE0085C202 /* LoginView.swift */,
 				B794864C2CFB5C1C0085C202 /* RegisterView.swift */,
+				B7C2B2002CFF33DC0021F0EE /* SalaView.swift */,
 			);
 			path = view;
 			sourceTree = "<group>";
@@ -324,6 +327,7 @@
 				B79486482CFB5BDD0085C202 /* MovieListView.swift in Sources */,
 				B794869C2CFB601F0085C202 /* MovieListViewModel.swift in Sources */,
 				B79486982CFB5F6A0085C202 /* MovieService.swift in Sources */,
+				B7C2B2012CFF33DC0021F0EE /* SalaView.swift in Sources */,
 				B79486302CFB5B3F0085C202 /* ProyectoDAMIICiberMatchApp.swift in Sources */,
 				B794863C2CFB5B400085C202 /* ProyectoDAMIICiberMatch.xcdatamodeld in Sources */,
 			);

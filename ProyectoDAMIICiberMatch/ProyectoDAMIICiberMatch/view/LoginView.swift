@@ -40,7 +40,7 @@ struct LoginView: View {
 
                 // Redirección si el usuario inicia sesión
                 NavigationLink(
-                    destination: MovieListView()
+                    destination: SalaView()
                     .navigationBarBackButtonHidden(true), // Oculta la flecha de regreso
 
                     isActive: $isLoggedIn
