@@ -12,7 +12,7 @@ struct SalaView: View {
     @State private var mensaje: String = ""
     @State private var creatorID: String?
     @State private var usuarioID: String?
-
+    
     let db = Firestore.firestore()
 
     var body: some View {
@@ -186,7 +186,7 @@ struct IngresarSalaView: View {
             escucharSala()
         }
         .navigationDestination(isPresented: $navigateToMovieList) {
-            MovieListView()
+            MovieListView() // Redirige a la vista de lista de películas
         }
     }
 
@@ -219,7 +219,7 @@ struct IngresarSalaView: View {
             if let document = document, document.exists {
                 if let usuarios = document.data()?["usuariosConectados"] as? [String], usuarios.count > 1 {
                     DispatchQueue.main.async {
-                        navigateToMovieList = true
+                        navigateToMovieList = true // Redirigir al usuario a MovieListView
                     }
                 }
             } else if let error = error {
@@ -228,6 +228,9 @@ struct IngresarSalaView: View {
         }
     }
 }
+
+
+
 #Preview {
     SalaView()
 }
