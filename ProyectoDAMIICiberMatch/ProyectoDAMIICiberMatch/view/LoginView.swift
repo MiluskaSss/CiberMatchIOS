@@ -60,13 +60,11 @@ struct LoginView: View {
             .padding()
         }
     }
-
     private func loginUser() {
         guard !email.isEmpty, !password.isEmpty else {
             errorMessage = "Por favor, ingresa tu correo y contraseña."
             return
         }
-
         isLoggingIn = true
         errorMessage = ""
 

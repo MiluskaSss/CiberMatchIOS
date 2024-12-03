@@ -1,10 +1,3 @@
-//
-//  SalaView.swift
-//  ProyectoDAMIICiberMatch
-//
-//  Created by DAMII on 3/12/24.
-//
-
 import SwiftUI
 import FirebaseFirestore
 import FirebaseAuth
@@ -19,7 +12,7 @@ struct SalaView: View {
     @State private var mensaje: String = ""
     @State private var creatorID: String?
     @State private var usuarioID: String?
-    
+
     let db = Firestore.firestore()
 
     var body: some View {
@@ -29,7 +22,6 @@ struct SalaView: View {
                     .font(.largeTitle)
                     .fontWeight(.bold)
                 
-                // Botón para crear una sala
                 Button(action: {
                     showCrearSala = true
                 }) {
@@ -43,7 +35,6 @@ struct SalaView: View {
                         .cornerRadius(10)
                 }
                 
-                // Botón para ingresar a una sala existente
                 Button(action: {
                     showIngresarSala = true
                 }) {
@@ -80,7 +71,7 @@ struct CrearSalaView: View {
     @Binding var salaCodigo: String
     @Binding var isSalaCreada: Bool
     @Binding var creatorID: String?
-    
+
     let db = Firestore.firestore()
 
     var body: some View {
@@ -119,7 +110,6 @@ struct CrearSalaView: View {
         }
         .padding()
         .onAppear {
-            // Obtener el ID del usuario autenticado (creador)
             creatorID = Auth.auth().currentUser?.uid
         }
     }
@@ -132,11 +122,10 @@ struct CrearSalaView: View {
     private func guardarSalaEnFirebase() {
         guard let creatorID = creatorID else { return }
         
-        // Guardar en Firestore la sala con su código y el ID del creador
         db.collection("salas").document(salaCodigo).setData([
             "codigo": salaCodigo,
             "creadorID": creatorID,
-            "usuariosConectados": [creatorID] // Incluir al creador como el primer usuario
+            "usuariosConectados": [creatorID]
         ]) { error in
             if let error = error {
                 print("Error al guardar la sala: \(error.localizedDescription)")
@@ -154,7 +143,9 @@ struct IngresarSalaView: View {
     @Binding var mensaje: String
     @Binding var creatorID: String?
     @Binding var usuarioID: String?
-    
+
+    @State private var navigateToMovieList = false
+
     let db = Firestore.firestore()
 
     var body: some View {
@@ -167,7 +158,6 @@ struct IngresarSalaView: View {
                 .padding()
                 .background(Color.gray.opacity(0.2))
                 .cornerRadius(10)
-                .keyboardType(.numberPad)
             
             if !isSalaValida {
                 Text("Código de sala inválido")
@@ -192,16 +182,20 @@ struct IngresarSalaView: View {
             }
         }
         .padding()
+        .onAppear {
+            escucharSala()
+        }
+        .navigationDestination(isPresented: $navigateToMovieList) {
+            MovieListView()
+        }
     }
 
     private func ingresarASala() {
         guard let usuarioID = usuarioID else { return }
         isLoading = true
         
-        // Verificar si el código de la sala es válido
         db.collection("salas").document(salaCodigo).getDocument { document, error in
             if let document = document, document.exists {
-                // Si la sala existe, agregar el usuario a la lista de usuarios conectados
                 db.collection("salas").document(salaCodigo).updateData([
                     "usuariosConectados": FieldValue.arrayUnion([usuarioID])
                 ]) { error in
@@ -210,21 +204,30 @@ struct IngresarSalaView: View {
                         print("Error al ingresar a la sala: \(error.localizedDescription)")
                     } else {
                         isSalaValida = true
-                        // Redirigir al usuario a la sala
-                        // Aquí puedes agregar la lógica para redirigir al usuario a la vista de la sala
                     }
                 }
             } else {
-                // Si la sala no existe
                 isLoading = false
                 isSalaValida = false
                 mensaje = "La sala no existe."
             }
         }
     }
-}
 
+    private func escucharSala() {
+        db.collection("salas").document(salaCodigo).addSnapshotListener { document, error in
+            if let document = document, document.exists {
+                if let usuarios = document.data()?["usuariosConectados"] as? [String], usuarios.count > 1 {
+                    DispatchQueue.main.async {
+                        navigateToMovieList = true
+                    }
+                }
+            } else if let error = error {
+                print("Error al escuchar los cambios en la sala: \(error.localizedDescription)")
+            }
+        }
+    }
+}
 #Preview {
     SalaView()
 }
-

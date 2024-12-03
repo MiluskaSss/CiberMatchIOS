@@ -1,5 +1,6 @@
 import SwiftUI
 import FirebaseAuth
+import FirebaseFirestore
 
 struct MovieListView: View {
     @StateObject var viewModel: MovieListViewModel = MovieListViewModel()
@@ -15,14 +16,12 @@ struct MovieListView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // Fondo negro para toda la pantalla
                 Color.black.edgesIgnoringSafeArea(.all)
                 
-                VStack(spacing: 0) { // Ajustar el espaciado entre los elementos
+                VStack(spacing: 0) {
                     HStack {
                         Spacer()
                         
-                        // Menú desplegable
                         Menu {
                             Button(action: {
                                 print("Perfil seleccionado")
@@ -30,22 +29,6 @@ struct MovieListView: View {
                                 Label("Perfil", systemImage: "person.circle")
                                     .foregroundColor(.yellow)
                             }
-                            
-                            Button(action: {
-                                print("Nombre del usuario seleccionado")
-                            }) {
-                                Label("Nombre del usuario", systemImage: "person.fill")
-                                    .foregroundColor(.yellow)
-                            }
-                            
-                            Button(action: {
-                                print("Ajustes seleccionados")
-                            }) {
-                                Label("Ajustes", systemImage: "gearshape.fill")
-                                    .foregroundColor(.yellow)
-                            }
-                            
-                            Divider()
                             
                             Button(action: {
                                 showLogoutAlert = true
@@ -56,25 +39,23 @@ struct MovieListView: View {
                         } label: {
                             Image(systemName: "line.horizontal.3.decrease.circle.fill")
                                 .font(.title)
-                                .foregroundColor(.yellow) // Icono de menú con color llamativo
+                                .foregroundColor(.yellow)
                                 .padding()
                         }
                     }
-                    .padding(.top, -105) // Reducir el espacio desde la parte superior para el menú
+                    .padding(.top, -105)
                     
-                    // Título más cerca de la parte superior
                     Text("Películas")
                         .font(.largeTitle)
                         .fontWeight(.bold)
-                        .foregroundColor(.yellow) // Título con color llamativo
-                        .padding(.top, -100) // Ajustar el espaciado superior del título
+                        .foregroundColor(.yellow)
+                        .padding(.top, -100)
                     
-                    // Mostrar las películas solo si hay datos
                     if viewModel.movies.isEmpty {
                         ProgressView("Cargando películas...")
                             .progressViewStyle(CircularProgressViewStyle())
-                            .foregroundColor(.yellow) // Color del progreso
-                            .padding(.top, 20) // Espaciado arriba del cargando
+                            .foregroundColor(.yellow)
+                            .padding(.top, 20)
                     } else {
                         ZStack {
                             ForEach(viewModel.movies.indices, id: \.self) { index in
@@ -107,34 +88,31 @@ struct MovieListView: View {
                                 }
                             }
                             
-                            // Botón "Me gusta" (Corazón)
+                            // Botón "Me gusta"
                             Button(action: {
-                                withAnimation {
-                                    currentIndex += 1
-                                }
+                                likeMovie(movieId: String(viewModel.movies[currentIndex].id)) // Convertimos a String
+                                currentIndex += 1
                             }) {
                                 Image(systemName: "heart.fill")
                                     .font(.system(size: 50))
                                     .foregroundColor(.green)
                                     .padding()
                             }
-                            .position(x: UIScreen.main.bounds.width - 50, y: 300) // Ajustar la posición vertical del botón
+                            .position(x: UIScreen.main.bounds.width - 50, y: 300)
                             
-                            // Botón "No me gusta" (X)
+                            // Botón "No me gusta"
                             Button(action: {
-                                withAnimation {
-                                    currentIndex += 1
-                                }
+                                currentIndex += 1
                             }) {
                                 Image(systemName: "xmark.circle.fill")
                                     .font(.system(size: 50))
                                     .foregroundColor(.red)
                                     .padding()
                             }
-                            .position(x: 60, y: 300) // Ajustar la posición vertical del botón
+                            .position(x: 60, y: 300)
                         }
                         .frame(height: 500)
-                        .padding(.top, -50) // Ajuste de espacio en la parte superior de las películas
+                        .padding(.top, -50)
                     }
                 }
                 .onAppear {
@@ -159,6 +137,62 @@ struct MovieListView: View {
         }
     }
     
+    private func likeMovie(movieId: String) {
+        guard let userId = Auth.auth().currentUser?.uid else { return }
+        let db = Firestore.firestore()
+        let userDoc = db.collection("sala").document(userId)
+        
+        userDoc.getDocument { document, error in
+            if let document = document, document.exists {
+                userDoc.updateData([
+                    "likes": FieldValue.arrayUnion([movieId])
+                ]) { error in
+                    if let error = error {
+                        print("Error al guardar 'Me gusta': \(error.localizedDescription)")
+                    } else {
+                        print("'Me gusta' añadido correctamente")
+                    }
+                }
+            } else {
+                userDoc.setData([
+                    "userId": userId,
+                    "likes": [movieId]
+                ]) { error in
+                    if let error = error {
+                        print("Error al crear documento: \(error.localizedDescription)")
+                    } else {
+                        print("Documento creado correctamente")
+                    }
+                }
+            }
+        }
+    }
+    
+    private func fetchCommonLikes() {
+        let db = Firestore.firestore()
+        db.collection("sala").getDocuments { snapshot, error in
+            if let error = error {
+                print("Error al obtener documentos: \(error.localizedDescription)")
+                return
+            }
+            
+            var allLikes: [[String]] = []
+            
+            snapshot?.documents.forEach { document in
+                if let likes = document.data()["likes"] as? [String] {
+                    allLikes.append(likes)
+                }
+            }
+            
+            guard let firstUserLikes = allLikes.first else { return }
+            let commonLikes = allLikes.dropFirst().reduce(Set(firstUserLikes)) { partialResult, nextLikes in
+                partialResult.intersection(Set(nextLikes))
+            }
+            
+            print("Coincidencias: \(commonLikes)")
+        }
+    }
+    
     private func logoutUser() {
         do {
             try Auth.auth().signOut()
@@ -169,10 +203,8 @@ struct MovieListView: View {
     }
 }
 
-
 struct MovieCardView: View {
     let movie: Movie
-    
     let baseImageURL = "https://image.tmdb.org/t/p/w500"
     
     var body: some View {
@@ -198,7 +230,7 @@ struct MovieCardView: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text(movie.title)
                     .font(.headline)
-                    .foregroundColor(.yellow) // Texto en amarillo
+                    .foregroundColor(.yellow)
                 Text(movie.overview)
                     .font(.subheadline)
                     .foregroundColor(.gray)
@@ -213,6 +245,8 @@ struct MovieCardView: View {
         .shadow(radius: 10)
     }
 }
+
+
 
 struct MovieListView_Previews: PreviewProvider {
     static var previews: some View {
