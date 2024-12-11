@@ -204,6 +204,8 @@ struct IngresarSalaView: View {
 
         isLoading = true
         
+        print("Código ingresado: \(salaCodigo)")  // Imprimir el código ingresado
+
         db.collection("salas").document(salaCodigo).getDocument { document, error in
             if let document = document, document.exists {
                 // Si la sala existe, actualiza la lista de usuarios conectados
@@ -236,6 +238,7 @@ struct IngresarSalaView: View {
             if let document = document, document.exists {
                 if let usuarios = document.data()?["usuariosConectados"] as? [String], usuarios.count > 1 {
                     DispatchQueue.main.async {
+                        print("Valor escuchado de usuarios conectados: \(usuarios)")  // Imprimir los usuarios conectados
                         navigateToMovieList = true // Redirige al usuario a MovieListView
                     }
                 }
@@ -244,7 +247,6 @@ struct IngresarSalaView: View {
             }
         }
     }
-
 }
 
 struct MovieListView: View {
