@@ -433,31 +433,32 @@ struct MovieListView: View {
         salaDoc.getDocument { document, error in
             if let document = document, document.exists {
                 // Si el documento ya existe, actualiza el campo "likes"
-                if var currentLikes = document.data()?["likes"] as? [Int] {
-                    // Añadir el "like" al array existente
-                    if !currentLikes.contains(movie.id) {  // Asegurarse de que no haya duplicados
-                        currentLikes.append(movie.id)
+                if var currentLikes = document.data()?["likes"] as? [String: Int] {
+                    // Verificar si el usuario ya ha dado un like
+                    if currentLikes[userId] == nil {  // El usuario aún no ha dado un "like"
+                        // Añadir el "like" al diccionario de likes
+                        currentLikes[userId] = movie.id
                         salaDoc.updateData([
                             "likes": currentLikes
                         ]) { error in
                             if let error = error {
                                 print("Error al agregar el 'like': \(error.localizedDescription)")
                             } else {
-                                print("'Like' añadido correctamente.")
+                                print("'Like' añadido correctamente por el usuario \(userId).")
                             }
                         }
                     } else {
-                        print("Este 'like' ya está registrado.")
+                        print("El usuario \(userId) ya ha dado un 'like' a esta película.")
                     }
                 } else {
-                    // Si el campo "likes" no existe, crea un array de "likes" con el nuevo "like"
+                    // Si el campo "likes" no existe, crea un diccionario de "likes" con el "like" del usuario
                     salaDoc.updateData([
-                        "likes": [movie.id]
+                        "likes": [userId: movie.id]
                     ]) { error in
                         if let error = error {
                             print("Error al agregar el 'like': \(error.localizedDescription)")
                         } else {
-                            print("'Like' añadido correctamente.")
+                            print("'Like' añadido correctamente por el usuario \(userId).")
                         }
                     }
                 }
@@ -465,12 +466,12 @@ struct MovieListView: View {
                 // Si el documento no existe, crea uno nuevo con el código de la sala
                 salaDoc.setData([
                     "salaCode": salaCode,  // Aquí guardamos el código de la sala
-                    "likes": [movie.id]
+                    "likes": [userId: movie.id]
                 ]) { error in
                     if let error = error {
                         print("Error al crear el documento en 'salas': \(error.localizedDescription)")
                     } else {
-                        print("Documento creado y 'like' añadido correctamente.")
+                        print("Documento creado y 'like' añadido correctamente por el usuario \(userId).")
                     }
                 }
             }
