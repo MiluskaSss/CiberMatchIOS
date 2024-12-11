@@ -275,6 +275,10 @@ struct IngresarSalaView: View {
 }
 
 
+import SwiftUI
+import Firebase
+import FirebaseFirestore
+
 struct MovieListView: View {
     @StateObject var viewModel: MovieListViewModel = MovieListViewModel()
     @State private var currentIndex: Int = 0
@@ -519,12 +523,10 @@ struct MovieCardView: View {
     }
 }
 
-
-
 struct MovieListView_Previews: PreviewProvider {
     static var previews: some View {
         MovieListView()
-            .preferredColorScheme(.dark) // Usar esquema de colores oscuro para la vista previa
+            .preferredColorScheme(.dark)
     }
 }
 
