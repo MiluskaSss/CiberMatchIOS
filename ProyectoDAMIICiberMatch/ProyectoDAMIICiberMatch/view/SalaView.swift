@@ -227,7 +227,7 @@ struct IngresarSalaView: View {
     }
 
     private func escucharSala() {
-        // Asegúrate de que el valor de salaCodigo esté actualizado
+        // Asegúrate de que el valor de salaCodigo esté actualizado y no vacío
         guard !salaCodigo.isEmpty else {
             return
         }
@@ -244,8 +244,8 @@ struct IngresarSalaView: View {
             }
         }
     }
-}
 
+}
 
 struct MovieListView: View {
     @StateObject var viewModel: MovieListViewModel = MovieListViewModel()
