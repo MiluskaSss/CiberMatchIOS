@@ -96,7 +96,7 @@ struct CrearSalaView: View {
                         .foregroundColor(.green)
                     
                     // NavigationLink para redirigir a MovieListView
-                    NavigationLink(destination: MovieListView()) {
+                    NavigationLink(destination: MovieListView(salaCodigo: $salaCodigo)) {
                         Text("Ir a la lista de películas")
                             .font(.title2)
                             .fontWeight(.semibold)
@@ -199,7 +199,7 @@ struct IngresarSalaView: View {
         }
         .padding()
         .navigationDestination(isPresented: $navigateToMovieList) {
-            MovieListView() // Redirige a la vista de lista de películas
+            MovieListView(salaCodigo: $salaCodigo) // Redirige a la vista de lista de películas
         }
     }
 
@@ -274,7 +274,6 @@ struct IngresarSalaView: View {
     }
 }
 
-
 import SwiftUI
 import Firebase
 import FirebaseFirestore
@@ -287,6 +286,10 @@ struct MovieListView: View {
     @State private var showLogoutAlert: Bool = false
     @Environment(\.presentationMode) var presentationMode
     @State private var navigateToLogin: Bool = false
+    @Binding var salaCodigo: String // Aquí usamos Binding<String>
+
+    
+    @State private var salaCode: String? = nil // Almacenamos el código de la sala
     
     let baseImageURL = "https://image.tmdb.org/t/p/w500"
     
@@ -367,7 +370,7 @@ struct MovieListView: View {
                             
                             // Botón "Me gusta"
                             Button(action: {
-                                likeMovie(movieId: String(viewModel.movies[currentIndex].id)) // Convertimos a String
+                                likeMovie(movie: viewModel.movies[currentIndex]) // Llamamos la función pasando el objeto completo Movie
                                 currentIndex += 1
                             }) {
                                 Image(systemName: "heart.fill")
@@ -376,6 +379,7 @@ struct MovieListView: View {
                                     .padding()
                             }
                             .position(x: UIScreen.main.bounds.width - 50, y: 300)
+
                             
                             // Botón "No me gusta"
                             Button(action: {
@@ -394,6 +398,7 @@ struct MovieListView: View {
                 }
                 .onAppear {
                     viewModel.getPopularMovies()
+                    fetchOrCreateSalaCode() // Llamar a la función para obtener o crear el código de la sala
                 }
                 .alert(isPresented: $showLogoutAlert) {
                     Alert(
@@ -414,62 +419,101 @@ struct MovieListView: View {
         }
     }
     
-    private func likeMovie(movieId: String) {
+    private func likeMovie(movie: Movie) {
         guard let userId = Auth.auth().currentUser?.uid else { return }
         let db = Firestore.firestore()
-        let userDoc = db.collection("sala").document(userId)
+
+        // Usamos el valor de salaCodigo directamente
+        let salaCode = salaCodigo // `salaCodigo` es un Binding, por lo que directamente lo usamos aquí
+
+        // Referencia al documento de la colección "salas" usando el código de la sala
+        let salaDoc = db.collection("salas").document(salaCode)
         
-        userDoc.getDocument { document, error in
+        // Obtén el documento de la colección "salas"
+        salaDoc.getDocument { document, error in
             if let document = document, document.exists {
-                userDoc.updateData([
-                    "likes": FieldValue.arrayUnion([movieId])
-                ]) { error in
-                    if let error = error {
-                        print("Error al guardar 'Me gusta': \(error.localizedDescription)")
+                // Si el documento ya existe, actualiza el campo "likes"
+                if var currentLikes = document.data()?["likes"] as? [Int] {
+                    // Añadir el "like" al array existente
+                    if !currentLikes.contains(movie.id) {  // Asegurarse de que no haya duplicados
+                        currentLikes.append(movie.id)
+                        salaDoc.updateData([
+                            "likes": currentLikes
+                        ]) { error in
+                            if let error = error {
+                                print("Error al agregar el 'like': \(error.localizedDescription)")
+                            } else {
+                                print("'Like' añadido correctamente.")
+                            }
+                        }
                     } else {
-                        print("'Me gusta' añadido correctamente")
+                        print("Este 'like' ya está registrado.")
+                    }
+                } else {
+                    // Si el campo "likes" no existe, crea un array de "likes" con el nuevo "like"
+                    salaDoc.updateData([
+                        "likes": [movie.id]
+                    ]) { error in
+                        if let error = error {
+                            print("Error al agregar el 'like': \(error.localizedDescription)")
+                        } else {
+                            print("'Like' añadido correctamente.")
+                        }
                     }
                 }
             } else {
-                userDoc.setData([
-                    "userId": userId,
-                    "likes": [movieId]
+                // Si el documento no existe, crea uno nuevo con el código de la sala
+                salaDoc.setData([
+                    "salaCode": salaCode,  // Aquí guardamos el código de la sala
+                    "likes": [movie.id]
                 ]) { error in
                     if let error = error {
-                        print("Error al crear documento: \(error.localizedDescription)")
+                        print("Error al crear el documento en 'salas': \(error.localizedDescription)")
                     } else {
-                        print("Documento creado correctamente")
+                        print("Documento creado y 'like' añadido correctamente.")
                     }
                 }
             }
         }
     }
+
     
-    private func fetchCommonLikes() {
+    // Función para obtener o crear el código de la sala
+    private func fetchOrCreateSalaCode() {
+        guard let userId = Auth.auth().currentUser?.uid else { return }
         let db = Firestore.firestore()
-        db.collection("sala").getDocuments { snapshot, error in
+        
+        // Buscamos si el usuario ya está en una sala
+        db.collection("salas").whereField("userId", isEqualTo: userId).getDocuments { snapshot, error in
             if let error = error {
-                print("Error al obtener documentos: \(error.localizedDescription)")
+                print("Error al obtener las salas: \(error.localizedDescription)")
                 return
             }
             
-            var allLikes: [[String]] = []
-            
-            snapshot?.documents.forEach { document in
-                if let likes = document.data()["likes"] as? [String] {
-                    allLikes.append(likes)
+            if let document = snapshot?.documents.first {
+                // Si el usuario ya está en una sala, obtenemos el código de la sala
+                self.salaCode = document.documentID
+                print("Sala existente con código: \(self.salaCode ?? "")")
+            } else {
+                // Si no está en ninguna sala, creamos una nueva sala con un código único
+                let newSalaCode = UUID().uuidString // Generamos un código único para la sala
+                self.salaCode = newSalaCode
+                
+                // Creamos el documento de la sala
+                db.collection("salas").document(newSalaCode).setData([
+                    "userId": userId,
+                    "likes": []
+                ]) { error in
+                    if let error = error {
+                        print("Error al crear la sala: \(error.localizedDescription)")
+                    } else {
+                        print("Sala creada con código: \(newSalaCode)")
+                    }
                 }
             }
-            
-            guard let firstUserLikes = allLikes.first else { return }
-            let commonLikes = allLikes.dropFirst().reduce(Set(firstUserLikes)) { partialResult, nextLikes in
-                partialResult.intersection(Set(nextLikes))
-            }
-            
-            print("Coincidencias: \(commonLikes)")
         }
     }
-    
+
     private func logoutUser() {
         do {
             try Auth.auth().signOut()
@@ -479,6 +523,7 @@ struct MovieListView: View {
         }
     }
 }
+
 
 struct MovieCardView: View {
     let movie: Movie
@@ -522,14 +567,6 @@ struct MovieCardView: View {
         .shadow(radius: 10)
     }
 }
-
-struct MovieListView_Previews: PreviewProvider {
-    static var previews: some View {
-        MovieListView()
-            .preferredColorScheme(.dark)
-    }
-}
-
 
 #Preview {
     SalaView()
