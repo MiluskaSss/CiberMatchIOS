@@ -122,6 +122,7 @@ struct CrearSalaView: View {
     private func guardarSalaEnFirebase() {
         guard let creatorID = creatorID else { return }
         
+        // Guardar la sala en Firebase
         db.collection("salas").document(salaCodigo).setData([
             "codigo": salaCodigo,
             "creadorID": creatorID,
@@ -131,6 +132,41 @@ struct CrearSalaView: View {
                 print("Error al guardar la sala: \(error.localizedDescription)")
             } else {
                 isSalaCreada = true
+                // Ahora que la sala ha sido guardada, comenzamos a escuchar los cambios en la sala
+                escucharSala()
+            }
+        }
+    }
+
+    private func escucharSala() {
+        // Verificamos si la variable salaCodigo no está vacía
+        guard !salaCodigo.isEmpty else {
+            print("El código de la sala está vacío.")
+            return
+        }
+        
+        print("Escuchando sala con código: \(salaCodigo)")  // Imprimir el código de la sala cuando se llama a la función escucharSala
+        
+        db.collection("salas").document(salaCodigo).addSnapshotListener { document, error in
+            if let document = document {
+                if document.exists {
+                    // Si el documento existe, imprimimos su contenido
+                    print("Documento de la sala escuchado: \(document.data() ?? [:])")
+                    
+                    // Imprimimos el código de la sala desde Firestore
+                    print("Código escuchado desde Firestore: \(salaCodigo)")
+
+                    if let usuarios = document.data()?["usuariosConectados"] as? [String], usuarios.count > 1 {
+                        DispatchQueue.main.async {
+                            print("Valor escuchado de usuarios conectados: \(usuarios)")  // Imprimir los usuarios conectados
+                            // Lógica adicional cuando la sala tiene más de un usuario
+                        }
+                    }
+                } else {
+                    print("El documento de la sala no existe.")
+                }
+            } else if let error = error {
+                print("Error al escuchar los cambios en la sala: \(error.localizedDescription)")
             }
         }
     }
