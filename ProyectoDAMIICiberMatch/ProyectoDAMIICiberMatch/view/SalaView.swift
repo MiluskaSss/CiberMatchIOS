@@ -183,7 +183,10 @@ struct IngresarSalaView: View {
         }
         .padding()
         .onAppear {
-            escucharSala()
+            // Esto se debería activar sólo cuando el valor de salaCodigo sea válido
+            if !salaCodigo.isEmpty {
+                escucharSala() // Llama a escucharSala solo si hay un código de sala
+            }
         }
         .navigationDestination(isPresented: $navigateToMovieList) {
             MovieListView() // Redirige a la vista de lista de películas
@@ -192,10 +195,18 @@ struct IngresarSalaView: View {
 
     private func ingresarASala() {
         guard let usuarioID = usuarioID else { return }
+        
+        // Asegúrate de que el código de sala no esté vacío
+        guard !salaCodigo.isEmpty else {
+            mensaje = "Por favor ingresa un código de sala válido."
+            return
+        }
+
         isLoading = true
         
         db.collection("salas").document(salaCodigo).getDocument { document, error in
             if let document = document, document.exists {
+                // Si la sala existe, actualiza la lista de usuarios conectados
                 db.collection("salas").document(salaCodigo).updateData([
                     "usuariosConectados": FieldValue.arrayUnion([usuarioID])
                 ]) { error in
@@ -207,6 +218,7 @@ struct IngresarSalaView: View {
                     }
                 }
             } else {
+                // Si la sala no existe, muestra un mensaje
                 isLoading = false
                 isSalaValida = false
                 mensaje = "La sala no existe."
@@ -215,11 +227,16 @@ struct IngresarSalaView: View {
     }
 
     private func escucharSala() {
+        // Asegúrate de que el valor de salaCodigo esté actualizado
+        guard !salaCodigo.isEmpty else {
+            return
+        }
+        
         db.collection("salas").document(salaCodigo).addSnapshotListener { document, error in
             if let document = document, document.exists {
                 if let usuarios = document.data()?["usuariosConectados"] as? [String], usuarios.count > 1 {
                     DispatchQueue.main.async {
-                        navigateToMovieList = true // Redirigir al usuario a MovieListView
+                        navigateToMovieList = true // Redirige al usuario a MovieListView
                     }
                 }
             } else if let error = error {
@@ -228,6 +245,8 @@ struct IngresarSalaView: View {
         }
     }
 }
+
+
 struct MovieListView: View {
     @StateObject var viewModel: MovieListViewModel = MovieListViewModel()
     @State private var currentIndex: Int = 0
