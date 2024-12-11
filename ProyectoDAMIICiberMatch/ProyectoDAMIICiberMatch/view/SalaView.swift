@@ -143,8 +143,9 @@ struct IngresarSalaView: View {
     @Binding var mensaje: String
     @Binding var creatorID: String?
     @Binding var usuarioID: String?
-
+    
     @State private var navigateToMovieList = false
+    @State private var salaListener: ListenerRegistration? // Variable para almacenar la escucha
 
     let db = Firestore.firestore()
 
@@ -185,6 +186,11 @@ struct IngresarSalaView: View {
         .onAppear {
             escucharSala()
         }
+        .onChange(of: salaCodigo) { newCodigo in
+            // Si el código de la sala cambia, cancela la escucha anterior y crea una nueva
+            salaListener?.remove()
+            escucharSala()
+        }
         .navigationDestination(isPresented: $navigateToMovieList) {
             MovieListView() // Redirige a la vista de lista de películas
         }
@@ -215,7 +221,7 @@ struct IngresarSalaView: View {
     }
 
     private func escucharSala() {
-        db.collection("salas").document(salaCodigo).addSnapshotListener { document, error in
+        salaListener = db.collection("salas").document(salaCodigo).addSnapshotListener { document, error in
             if let document = document, document.exists {
                 if let usuarios = document.data()?["usuariosConectados"] as? [String], usuarios.count > 1 {
                     DispatchQueue.main.async {
@@ -228,6 +234,7 @@ struct IngresarSalaView: View {
         }
     }
 }
+
 struct MovieListView: View {
     @StateObject var viewModel: MovieListViewModel = MovieListViewModel()
     @State private var currentIndex: Int = 0
