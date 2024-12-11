@@ -182,12 +182,6 @@ struct IngresarSalaView: View {
             }
         }
         .padding()
-        .onAppear {
-            // Esto se debería activar sólo cuando el valor de salaCodigo sea válido
-            if !salaCodigo.isEmpty {
-                escucharSala() // Llama a escucharSala solo si hay un código de sala
-            }
-        }
         .navigationDestination(isPresented: $navigateToMovieList) {
             MovieListView() // Redirige a la vista de lista de películas
         }
@@ -217,6 +211,8 @@ struct IngresarSalaView: View {
                         print("Error al ingresar a la sala: \(error.localizedDescription)")
                     } else {
                         isSalaValida = true
+                        // Ahora que hemos ingresado a la sala, comenzamos a escuchar la sala
+                        escucharSala()
                     }
                 }
             } else {
@@ -260,8 +256,6 @@ struct IngresarSalaView: View {
             }
         }
     }
-
-
 }
 
 
