@@ -432,46 +432,72 @@ struct MovieListView: View {
         // Obtén el documento de la colección "salas"
         salaDoc.getDocument { document, error in
             if let document = document, document.exists {
-                // Si el documento ya existe, actualiza el campo "likes"
-                if var currentLikes = document.data()?["likes"] as? [String: Int] {
-                    // Verificar si el usuario ya ha dado un like
-                    if currentLikes[userId] == nil {  // El usuario aún no ha dado un "like"
-                        // Añadir el "like" al diccionario de likes
-                        currentLikes[userId] = movie.id
-                        salaDoc.updateData([
-                            "likes": currentLikes
-                        ]) { error in
-                            if let error = error {
-                                print("Error al agregar el 'like': \(error.localizedDescription)")
-                            } else {
-                                print("'Like' añadido correctamente por el usuario \(userId).")
-                            }
+                // Si el documento ya existe, actualiza los arrays de "likes"
+                if var currentCreatorLikes = document.data()?["creatorLikes"] as? [Int],
+                   var currentUserLikes = document.data()?["userLikes"] as? [String] {
+                    
+                    // Si el usuario es el creador de la sala
+                    if userId == document.data()?["userId"] as? String {
+                        // Añadir el "like" del creador de la sala
+                        if !currentCreatorLikes.contains(movie.id) {
+                            currentCreatorLikes.append(movie.id)
                         }
                     } else {
-                        print("El usuario \(userId) ya ha dado un 'like' a esta película.")
+                        // Si el usuario no es el creador, es un usuario normal
+                        // Añadir el "like" del usuario
+                        if !currentUserLikes.contains(userId) {
+                            currentUserLikes.append(userId)
+                        }
                     }
-                } else {
-                    // Si el campo "likes" no existe, crea un diccionario de "likes" con el "like" del usuario
+                    
+                    // Actualizamos los arrays con los nuevos "likes"
                     salaDoc.updateData([
-                        "likes": [userId: movie.id]
+                        "creatorLikes": currentCreatorLikes,
+                        "userLikes": currentUserLikes
                     ]) { error in
                         if let error = error {
                             print("Error al agregar el 'like': \(error.localizedDescription)")
                         } else {
-                            print("'Like' añadido correctamente por el usuario \(userId).")
+                            print("'Like' añadido correctamente.")
+                        }
+                    }
+                } else {
+                    // Si los arrays "creatorLikes" o "userLikes" no existen, crearlos
+                    var creatorLikes = [Int]()
+                    var userLikes = [String]()
+                    
+                    if userId == document.data()?["userId"] as? String {
+                        creatorLikes.append(movie.id) // El creador da el primer "like"
+                    } else {
+                        userLikes.append(userId) // Un usuario normal da su "like"
+                    }
+                    
+                    // Establecer los datos iniciales
+                    salaDoc.updateData([
+                        "creatorLikes": creatorLikes,
+                        "userLikes": userLikes
+                    ]) { error in
+                        if let error = error {
+                            print("Error al inicializar los 'likes': \(error.localizedDescription)")
+                        } else {
+                            print("Documento creado y 'like' añadido correctamente.")
                         }
                     }
                 }
             } else {
-                // Si el documento no existe, crea uno nuevo con el código de la sala
+                // Si el documento no existe, creamos uno nuevo con el código de la sala
+                let creatorLikes = userId == document?.data()?["userId"] as? String ? [movie.id] : []
+                let userLikes = userId != document?.data()?["userId"] as? String ? [userId] : []
+                
                 salaDoc.setData([
-                    "salaCode": salaCode,  // Aquí guardamos el código de la sala
-                    "likes": [userId: movie.id]
+                    "salaCode": salaCode,  // Guardamos el código de la sala
+                    "creatorLikes": creatorLikes,
+                    "userLikes": userLikes
                 ]) { error in
                     if let error = error {
                         print("Error al crear el documento en 'salas': \(error.localizedDescription)")
                     } else {
-                        print("Documento creado y 'like' añadido correctamente por el usuario \(userId).")
+                        print("Documento creado y 'like' añadido correctamente.")
                     }
                 }
             }
