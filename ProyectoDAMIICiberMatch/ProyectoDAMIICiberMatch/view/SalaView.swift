@@ -434,19 +434,19 @@ struct MovieListView: View {
             if let document = document, document.exists {
                 // Si el documento ya existe, actualiza los arrays de "likes"
                 if var currentCreatorLikes = document.data()?["creatorLikes"] as? [Int],
-                   var currentUserLikes = document.data()?["userLikes"] as? [String] {
+                   var currentUserLikes = document.data()?["userLikes"] as? [Int] {
                     
                     // Si el usuario es el creador de la sala
-                    if userId == document.data()?["userId"] as? String {
-                        // Añadir el "like" del creador de la sala
+                    if userId == document.data()?["creatorID"] as? String {
+                        // Añadir el "like" del creador de la sala (usando movie.id)
                         if !currentCreatorLikes.contains(movie.id) {
                             currentCreatorLikes.append(movie.id)
                         }
                     } else {
                         // Si el usuario no es el creador, es un usuario normal
-                        // Añadir el "like" del usuario
-                        if !currentUserLikes.contains(userId) {
-                            currentUserLikes.append(userId)
+                        // Añadir el "like" del usuario (usando movie.id)
+                        if !currentUserLikes.contains(movie.id) {
+                            currentUserLikes.append(movie.id)
                         }
                     }
                     
@@ -464,15 +464,17 @@ struct MovieListView: View {
                 } else {
                     // Si los arrays "creatorLikes" o "userLikes" no existen, crearlos
                     var creatorLikes = [Int]()
-                    var userLikes = [String]()
+                    var userLikes = [Int]()
                     
-                    if userId == document.data()?["userId"] as? String {
-                        creatorLikes.append(movie.id) // El creador da el primer "like"
+                    if userId == document.data()?["creatorID"] as? String {
+                        // El creador da el primer "like"
+                        creatorLikes.append(movie.id)
                     } else {
-                        userLikes.append(userId) // Un usuario normal da su "like"
+                        // Un usuario normal da su "like"
+                        userLikes.append(movie.id)
                     }
                     
-                    // Establecer los datos iniciales
+                    // Establecer los datos iniciales en Firestore
                     salaDoc.updateData([
                         "creatorLikes": creatorLikes,
                         "userLikes": userLikes
@@ -486,11 +488,12 @@ struct MovieListView: View {
                 }
             } else {
                 // Si el documento no existe, creamos uno nuevo con el código de la sala
-                let creatorLikes = userId == document?.data()?["userId"] as? String ? [movie.id] : []
-                let userLikes = userId != document?.data()?["userId"] as? String ? [userId] : []
+                let creatorLikes = userId == document?.data()?["creatorID"] as? String ? [movie.id] : []
+                let userLikes = userId != document?.data()?["creatorID"] as? String ? [movie.id] : []
                 
                 salaDoc.setData([
                     "salaCode": salaCode,  // Guardamos el código de la sala
+                    "creatorID": userId,   // Guardamos el ID del creador
                     "creatorLikes": creatorLikes,
                     "userLikes": userLikes
                 ]) { error in
