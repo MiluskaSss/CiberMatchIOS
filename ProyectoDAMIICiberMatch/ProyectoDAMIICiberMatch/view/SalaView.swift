@@ -398,7 +398,7 @@ struct MovieListView: View {
                 }
                 .onAppear {
                     viewModel.getPopularMovies()
-                    fetchOrCreateSalaCode() // Llamar a la función para obtener o crear el código de la sala
+                    fetchSalaCode() // Llamar a la función para obtener o crear el código de la sala
                 }
                 .alert(isPresented: $showLogoutAlert) {
                     Alert(
@@ -526,9 +526,7 @@ struct MovieListView: View {
     }
 
 
-    
-    // Función para obtener o crear el código de la sala
-    private func fetchOrCreateSalaCode() {
+    private func fetchSalaCode() {
         guard let userId = Auth.auth().currentUser?.uid else { return }
         let db = Firestore.firestore()
         
@@ -544,24 +542,11 @@ struct MovieListView: View {
                 self.salaCode = document.documentID
                 print("Sala existente con código: \(self.salaCode ?? "")")
             } else {
-                // Si no está en ninguna sala, creamos una nueva sala con un código único
-                let newSalaCode = UUID().uuidString // Generamos un código único para la sala
-                self.salaCode = newSalaCode
-                
-                // Creamos el documento de la sala
-                db.collection("salas").document(newSalaCode).setData([
-                    "userId": userId,
-                    "likes": []
-                ]) { error in
-                    if let error = error {
-                        print("Error al crear la sala: \(error.localizedDescription)")
-                    } else {
-                        print("Sala creada con código: \(newSalaCode)")
-                    }
-                }
+                print("El usuario no está en ninguna sala.")
             }
         }
     }
+
 
     private func logoutUser() {
         do {
