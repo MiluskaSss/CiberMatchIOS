@@ -462,47 +462,10 @@ struct MovieListView: View {
                             print("'Like' y 'coincidencia' añadidos correctamente.")
                         }
                     }
-                } else {
-                    // Si los arrays no existen, crearlos
-                    var creatorLikes = [Int]()
-                    var userLikes = [Int]()
-                    var coincidencias = [Int]()
                     
-                    if userId == creatorId {
-                        creatorLikes.append(movie.id) // El creador da el primer "like"
-                    } else {
-                        userLikes.append(movie.id) // Un usuario normal da su "like"
-                    }
-                    
-                    // Establecer los datos iniciales
-                    salaDoc.updateData([
-                        "creatorLikes": creatorLikes,
-                        "userLikes": userLikes,
-                        "coincidencia": coincidencias
-                    ]) { error in
-                        if let error = error {
-                            print("Error al inicializar los 'likes' o 'coincidencia': \(error.localizedDescription)")
-                        } else {
-                            print("Documento creado y 'like' añadido correctamente.")
-                        }
-                    }
-                }
-            } else {
-                // Si el documento no existe, creamos uno nuevo con el código de la sala
-                let creatorLikes = userId == document?.data()?["creadorID"] as? String ? [movie.id] : []
-                let userLikes = userId != document?.data()?["creadorID"] as? String ? [movie.id] : []
-                let coincidencias = Array(Set(creatorLikes).intersection(Set(userLikes))) // Calcular coincidencias
-                
-                salaDoc.setData([
-                    "salaCode": salaCode,  // Guardamos el código de la sala
-                    "creatorLikes": creatorLikes,
-                    "userLikes": userLikes,
-                    "coincidencia": coincidencias // Guardar coincidencias
-                ]) { error in
-                    if let error = error {
-                        print("Error al crear el documento en 'salas': \(error.localizedDescription)")
-                    } else {
-                        print("Documento creado y 'like' añadido correctamente.")
+                    // Si hay coincidencias, mostrar animación
+                    if !currentCoincidences.isEmpty {
+                        showMatchAnimation()
                     }
                 }
             }
@@ -519,10 +482,46 @@ struct MovieListView: View {
                 let coincidencias = Array(Set(creatorLikes).intersection(Set(userLikes)))
                 
                 print("Coincidencias actualizadas: \(coincidencias)")
-                // Aquí puedes hacer lo que necesites con las coincidencias, como actualizar la UI.
+                
+                // Si hay coincidencias, mostrar animación
+                if !coincidencias.isEmpty {
+                    showMatchAnimation()
+                }
             }
         }
     }
+
+    // Función para mostrar animación de "Match"
+    private func showMatchAnimation() {
+        // Crear un UILabel que aparecerá con la animación de "Match"
+        let matchLabel = UILabel()
+        matchLabel.text = "¡Match!"
+        matchLabel.font = UIFont.boldSystemFont(ofSize: 32)
+        matchLabel.textColor = .white
+        matchLabel.textAlignment = .center
+        matchLabel.alpha = 0.0
+        
+        // Agregar el label al top view
+        if let topController = UIApplication.shared.keyWindow?.rootViewController {
+            topController.view.addSubview(matchLabel)
+            
+            // Configurar el tamaño y posición
+            matchLabel.frame = CGRect(x: 0, y: 100, width: topController.view.frame.width, height: 50)
+            
+            // Animación de aparición
+            UIView.animate(withDuration: 0.5, animations: {
+                matchLabel.alpha = 1.0
+            }) { _ in
+                // Después de mostrar la animación, desaparecer
+                UIView.animate(withDuration: 0.5, delay: 1.0, options: [], animations: {
+                    matchLabel.alpha = 0.0
+                }) { _ in
+                    matchLabel.removeFromSuperview()  // Eliminar el label después de la animación
+                }
+            }
+        }
+    }
+
 
     private func logoutUser() {
         do {
