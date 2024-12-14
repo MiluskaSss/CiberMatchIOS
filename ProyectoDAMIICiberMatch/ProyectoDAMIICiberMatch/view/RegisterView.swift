@@ -1,10 +1,3 @@
-//
-//  RegisterView.swift
-//  ProyectoDAMIICiberMatch
-//
-//  Created by DAMII on 30/11/24.
-//
-
 import SwiftUI
 import FirebaseAuth
 
@@ -16,60 +9,86 @@ struct RegisterView: View {
     @State private var isRegistering: Bool = false
     
     var body: some View {
-        VStack(spacing: 20) {
-            Text("¡Bienvenido a MealsApp!")
-                .font(.largeTitle)
-                .fontWeight(.bold)
+        ZStack {
+            // Fondo Gradiente
+            LinearGradient(gradient: Gradient(colors: [Color(hex: "#001f3d"), Color(hex: "#0066cc"), Color(hex: "#000000")]), startPoint: .top, endPoint: .bottom)
+                .edgesIgnoringSafeArea(.all) // Asegura que el gradiente ocupe toda la pantalla
             
-            // Username Field
-            TextField("Correo electrónico", text: $username)
-                .padding()
-                .background(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.gray, lineWidth: 1))
-                .padding(.horizontal)
-                .autocapitalization(.none)
-                .keyboardType(.emailAddress)
-                .textInputAutocapitalization(.never)
-            
-            // Password Field
-            SecureField("Contraseña", text: $password)
-                .padding()
-                .background(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.gray, lineWidth: 1))
-                .padding(.horizontal)
-            
-            // Error message
-            if !errorMessage.isEmpty {
-                Text(errorMessage)
-                    .foregroundColor(.red)
-                    .padding(.top, 10)
-            }
-            
-            // Register/Sign Up Button
-            Button(action: registerUser) {
-                Text(isRegistering ? "Registrando..." : "Crear cuenta")
-                    .foregroundColor(.white)
-                    .padding()
-                    .background(Color.blue)
-                    .cornerRadius(10)
-                    .padding(.horizontal)
-            }
-            .disabled(isRegistering || username.isEmpty || password.isEmpty) // Deshabilitar si no hay datos
-            
-            // Switch to Login Link
-            HStack {
-                Text("¿Ya tienes cuenta?")
-                Button(action: {
-                    // Aquí podrías agregar la lógica para cambiar a la vista de login
-                }) {
-                    Text("Inicia sesión")
-                        .foregroundColor(.blue)
-                        .fontWeight(.bold)
+            VStack {
+                Spacer()
+                
+                Text("¡Bienvenido a MealsApp!")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+                    .foregroundColor(.white) // Color blanco para el título
+                    .padding(.bottom, 30)
+                    .multilineTextAlignment(.center) // Centrado del título
+                
+                // Caja de registro
+                VStack(spacing: 20) {
+                    // Username Field
+                    TextField("Correo electrónico", text: $username)
+                        .padding()
+                        .background(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.gray.opacity(0.4), lineWidth: 2)) // Light gray border
+                        .padding(.horizontal, 20)
+                        .autocapitalization(.none)
+                        .keyboardType(.emailAddress)
+                        .textInputAutocapitalization(.never)
+                        .foregroundColor(Color(hex: "#1A1A1A")) // Normal text color
+                        .shadow(color: Color(hex: "#00FFFF"), radius: 10, x: 0, y: 0) // Neon blue glow around the border
+                    
+                    // Password Field
+                    SecureField("Contraseña", text: $password)
+                        .padding()
+                        .background(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.gray.opacity(0.4), lineWidth: 2)) // Light gray border
+                        .padding(.horizontal, 20)
+                        .foregroundColor(Color(hex: "#1A1A1A")) // Normal text color
+                        .shadow(color: Color(hex: "#00FFFF"), radius: 10, x: 0, y: 0) // Neon blue glow around the border
+                    
+                    // Error message
+                    if !errorMessage.isEmpty {
+                        Text(errorMessage)
+                            .foregroundColor(Color(hex: "#FF4C61")) // Rojo Claro
+                            .padding(.top, 10)
+                    }
+                    
+                    // Register/Sign Up Button
+                    Button(action: registerUser) {
+                        Text(isRegistering ? "Registrando..." : "Crear cuenta")
+                            .foregroundColor(.white)
+                            .padding()
+                            .background(Color(hex: "#0028ff")) // Azul Brillante
+                            .cornerRadius(12)
+                            .padding(.horizontal, 20)
+                            .opacity(isRegistering ? 0.6 : 1.0) // Reduce opacity when registering
+                    }
+                    .disabled(isRegistering || username.isEmpty || password.isEmpty) // Deshabilitar si no hay datos
+                    
+                    // Switch to Login Link
+                    HStack {
+                        Text("¿Ya tienes cuenta?")
+                            .foregroundColor(Color.gray)
+                        Button(action: {
+                            // Aquí podrías agregar la lógica para cambiar a la vista de login
+                        }) {
+                            Text("Inicia sesión")
+                                .foregroundColor(Color(hex: "#0066cc")) // Azul
+                                .fontWeight(.bold)
+                        }
+                    }
+                    .padding(.top, 20)
                 }
+                .padding()
+                .background(RoundedRectangle(cornerRadius: 15).fill(Color.white)) // Fondo blanco de la caja
+                .shadow(radius: 10) // Sombra
+                .padding(.horizontal, 20)
+                
+                Spacer()
             }
-            .padding(.top, 20)
-            
-            Spacer()
+            .padding(.top, 50)
+            .frame(maxWidth: .infinity, maxHeight: .infinity) // Asegura que el VStack ocupe todo el espacio disponible
+            .multilineTextAlignment(.center) // Centrado del contenido
         }
-        .padding(.top, 50)
     }
     
     private func registerUser() {
@@ -95,5 +114,5 @@ struct RegisterView: View {
 }
 
 #Preview {
-    LoginView()
+    RegisterView()
 }
