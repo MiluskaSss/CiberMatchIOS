@@ -421,8 +421,8 @@ struct MovieListView: View {
     private func likeMovie(movie: Movie) {
         guard let userId = Auth.auth().currentUser?.uid else { return }
         let db = Firestore.firestore()
-        var previousCoincidences: Set<Int> = []
-
+        var previousCreatorLikes: [Int] = []
+        var previousUserLikes: [Int] = []
         let salaCode = salaCodigo // `salaCodigo` es un Binding, por lo que directamente lo usamos aquí
         let salaDoc = db.collection("salas").document(salaCode)
         
@@ -520,21 +520,23 @@ struct MovieListView: View {
                 let data = documentSnapshot.data()
                 let creatorLikes = data?["creatorLikes"] as? [Int] ?? []
                 let userLikes = data?["userLikes"] as? [Int] ?? []
-                let coincidencias = Set(creatorLikes).intersection(Set(userLikes))
+                let coincidencias = Array(Set(creatorLikes).intersection(Set(userLikes)))
                 
-                // Imprimir coincidencias
                 print("Coincidencias actualizadas: \(coincidencias)")
+
+                // Comprobar si se ha añadido un nuevo valor a la lista
+                let newLikes = Set(creatorLikes).subtracting(previousCreatorLikes).count > 0 || Set(userLikes).subtracting(previousUserLikes).count > 0
                 
-                // Verificar si hay nuevos elementos en las coincidencias
-                let newMatches = coincidencias.subtracting(previousCoincidences)
-                
-                // Si hay nuevos elementos en las coincidencias, mostrar la animación
-                if !newMatches.isEmpty {
-                    showMatchAnimation()
+                if newLikes {
+                    // Si hay coincidencias, mostrar animación
+                    if !coincidencias.isEmpty {
+                        showMatchAnimation()
+                    }
                 }
-                
-                // Actualizar las coincidencias previas
-                previousCoincidences = coincidencias
+
+                // Actualizar los valores anteriores de "creatorLikes" y "userLikes"
+                previousCreatorLikes = creatorLikes
+                previousUserLikes = userLikes
             }
         }
     }
