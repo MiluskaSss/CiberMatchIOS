@@ -462,10 +462,47 @@ struct MovieListView: View {
                             print("'Like' y 'coincidencia' añadidos correctamente.")
                         }
                     }
+                } else {
+                    // Si los arrays no existen, crearlos
+                    var creatorLikes = [Int]()
+                    var userLikes = [Int]()
+                    var coincidencias = [Int]()
                     
-                    // Si hay coincidencias, mostrar animación
-                    if !currentCoincidences.isEmpty {
-                        showMatchAnimation()
+                    if userId == creatorId {
+                        creatorLikes.append(movie.id) // El creador da el primer "like"
+                    } else {
+                        userLikes.append(movie.id) // Un usuario normal da su "like"
+                    }
+                    
+                    // Establecer los datos iniciales
+                    salaDoc.updateData([
+                        "creatorLikes": creatorLikes,
+                        "userLikes": userLikes,
+                        "coincidencia": coincidencias
+                    ]) { error in
+                        if let error = error {
+                            print("Error al inicializar los 'likes' o 'coincidencia': \(error.localizedDescription)")
+                        } else {
+                            print("Documento creado y 'like' añadido correctamente.")
+                        }
+                    }
+                }
+            } else {
+                // Si el documento no existe, creamos uno nuevo con el código de la sala
+                let creatorLikes = userId == document?.data()?["creadorID"] as? String ? [movie.id] : []
+                let userLikes = userId != document?.data()?["creadorID"] as? String ? [movie.id] : []
+                let coincidencias = Array(Set(creatorLikes).intersection(Set(userLikes))) // Calcular coincidencias
+                
+                salaDoc.setData([
+                    "salaCode": salaCode,  // Guardamos el código de la sala
+                    "creatorLikes": creatorLikes,
+                    "userLikes": userLikes,
+                    "coincidencia": coincidencias // Guardar coincidencias
+                ]) { error in
+                    if let error = error {
+                        print("Error al crear el documento en 'salas': \(error.localizedDescription)")
+                    } else {
+                        print("Documento creado y 'like' añadido correctamente.")
                     }
                 }
             }
@@ -482,15 +519,14 @@ struct MovieListView: View {
                 let coincidencias = Array(Set(creatorLikes).intersection(Set(userLikes)))
                 
                 print("Coincidencias actualizadas: \(coincidencias)")
-                
+                // Aquí puedes hacer lo que necesites con las coincidencias, como actualizar la UI.
                 // Si hay coincidencias, mostrar animación
-                if !coincidencias.isEmpty {
-                    showMatchAnimation()
-                }
+                            if !coincidencias.isEmpty {
+                                showMatchAnimation()
+                            }
             }
         }
     }
-
     // Función para mostrar animación de "Match"
     private func showMatchAnimation() {
         // Crear un UILabel que aparecerá con la animación de "Match"
@@ -521,8 +557,6 @@ struct MovieListView: View {
             }
         }
     }
-
-
     private func logoutUser() {
         do {
             try Auth.auth().signOut()
