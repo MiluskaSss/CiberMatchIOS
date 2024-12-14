@@ -523,7 +523,6 @@ struct MovieListView: View {
                 
                 // Comprobar si la cantidad de coincidencias ha aumentado
                 if currentCoincidences.count == previousCoincidencesCount + 1 {
-                    print("Coincidencia agregada: \(currentCoincidences.last ?? -1)")
                     print("MATCH")
                     showMatchAnimation()
                     // Aquí puedes realizar cualquier acción que desees al detectar que se agregó una nueva coincidencia
