@@ -398,7 +398,6 @@ struct MovieListView: View {
                 }
                 .onAppear {
                     viewModel.getPopularMovies()
-                    fetchSalaCode() // Llamar a la función para obtener o crear el código de la sala
                 }
                 .alert(isPresented: $showLogoutAlert) {
                     Alert(
@@ -524,29 +523,6 @@ struct MovieListView: View {
             }
         }
     }
-
-
-    private func fetchSalaCode() {
-        guard let userId = Auth.auth().currentUser?.uid else { return }
-        let db = Firestore.firestore()
-        
-        // Buscamos si el usuario ya está en una sala
-        db.collection("salas").whereField("userId", isEqualTo: userId).getDocuments { snapshot, error in
-            if let error = error {
-                print("Error al obtener las salas: \(error.localizedDescription)")
-                return
-            }
-            
-            if let document = snapshot?.documents.first {
-                // Si el usuario ya está en una sala, obtenemos el código de la sala
-                self.salaCode = document.documentID
-                print("Sala existente con código: \(self.salaCode ?? "")")
-            } else {
-                print("El usuario no está en ninguna sala.")
-            }
-        }
-    }
-
 
     private func logoutUser() {
         do {
