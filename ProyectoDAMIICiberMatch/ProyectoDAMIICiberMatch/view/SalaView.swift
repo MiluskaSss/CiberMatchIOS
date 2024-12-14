@@ -422,22 +422,18 @@ struct MovieListView: View {
     private func likeMovie(movie: Movie) {
         guard let userId = Auth.auth().currentUser?.uid else { return }
         let db = Firestore.firestore()
-
-        // Usamos el valor de salaCodigo directamente
+        
         let salaCode = salaCodigo // `salaCodigo` es un Binding, por lo que directamente lo usamos aquí
-
-        // Referencia al documento de la colección "salas" usando el código de la sala
         let salaDoc = db.collection("salas").document(salaCode)
         
-        // Obtén el documento de la colección "salas"
         salaDoc.getDocument { document, error in
             if let document = document, document.exists {
-                // Obtener el ID del creador de la sala (usando el campo "creadorID")
                 let creatorId = document.data()?["creadorID"] as? String
-
-                // Si el documento ya existe, actualiza los arrays de "likes"
+                
+                // Recuperamos los arrays existentes
                 if var currentCreatorLikes = document.data()?["creatorLikes"] as? [Int],
-                   var currentUserLikes = document.data()?["userLikes"] as? [Int] {
+                   var currentUserLikes = document.data()?["userLikes"] as? [Int],
+                   var currentCoincidences = document.data()?["coincidencia"] as? [Int] {
                     
                     // Si el usuario es el creador de la sala
                     if userId == creatorId {
@@ -452,35 +448,41 @@ struct MovieListView: View {
                         }
                     }
                     
-                    // Actualizamos los arrays con los nuevos "likes"
+                    // Actualizar el array de coincidencias
+                    currentCoincidences = Array(Set(currentCreatorLikes).intersection(Set(currentUserLikes)))
+                    
+                    // Actualizamos los arrays con los nuevos "likes" y coincidencias
                     salaDoc.updateData([
                         "creatorLikes": currentCreatorLikes,
-                        "userLikes": currentUserLikes
+                        "userLikes": currentUserLikes,
+                        "coincidencia": currentCoincidences
                     ]) { error in
                         if let error = error {
-                            print("Error al agregar el 'like': \(error.localizedDescription)")
+                            print("Error al agregar el 'like' o la 'coincidencia': \(error.localizedDescription)")
                         } else {
-                            print("'Like' añadido correctamente.")
+                            print("'Like' y 'coincidencia' añadidos correctamente.")
                         }
                     }
                 } else {
-                    // Si los arrays "creatorLikes" o "userLikes" no existen, crearlos
+                    // Si los arrays no existen, crearlos
                     var creatorLikes = [Int]()
-                    var userLikes = [String]()
+                    var userLikes = [Int]()
+                    var coincidencias = [Int]()
                     
                     if userId == creatorId {
                         creatorLikes.append(movie.id) // El creador da el primer "like"
                     } else {
-                        userLikes.append(userId) // Un usuario normal da su "like"
+                        userLikes.append(movie.id) // Un usuario normal da su "like"
                     }
                     
                     // Establecer los datos iniciales
                     salaDoc.updateData([
                         "creatorLikes": creatorLikes,
-                        "userLikes": userLikes
+                        "userLikes": userLikes,
+                        "coincidencia": coincidencias
                     ]) { error in
                         if let error = error {
-                            print("Error al inicializar los 'likes': \(error.localizedDescription)")
+                            print("Error al inicializar los 'likes' o 'coincidencia': \(error.localizedDescription)")
                         } else {
                             print("Documento creado y 'like' añadido correctamente.")
                         }
@@ -489,12 +491,14 @@ struct MovieListView: View {
             } else {
                 // Si el documento no existe, creamos uno nuevo con el código de la sala
                 let creatorLikes = userId == document?.data()?["creadorID"] as? String ? [movie.id] : []
-                let userLikes = userId != document?.data()?["creadorID"] as? String ? [userId] : []
+                let userLikes = userId != document?.data()?["creadorID"] as? String ? [movie.id] : []
+                let coincidencias = Array(Set(creatorLikes).intersection(Set(userLikes))) // Calcular coincidencias
                 
                 salaDoc.setData([
                     "salaCode": salaCode,  // Guardamos el código de la sala
                     "creatorLikes": creatorLikes,
-                    "userLikes": userLikes
+                    "userLikes": userLikes,
+                    "coincidencia": coincidencias // Guardar coincidencias
                 ]) { error in
                     if let error = error {
                         print("Error al crear el documento en 'salas': \(error.localizedDescription)")
@@ -504,7 +508,23 @@ struct MovieListView: View {
                 }
             }
         }
+        
+        // Escuchar cambios en el documento en tiempo real
+        salaDoc.addSnapshotListener { documentSnapshot, error in
+            if let error = error {
+                print("Error al escuchar cambios: \(error.localizedDescription)")
+            } else if let documentSnapshot = documentSnapshot, documentSnapshot.exists {
+                let data = documentSnapshot.data()
+                let creatorLikes = data?["creatorLikes"] as? [Int] ?? []
+                let userLikes = data?["userLikes"] as? [Int] ?? []
+                let coincidencias = Array(Set(creatorLikes).intersection(Set(userLikes)))
+                
+                print("Coincidencias actualizadas: \(coincidencias)")
+                // Aquí puedes hacer lo que necesites con las coincidencias, como actualizar la UI.
+            }
+        }
     }
+
 
     
     // Función para obtener o crear el código de la sala
