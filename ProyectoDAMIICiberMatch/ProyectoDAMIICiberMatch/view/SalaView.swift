@@ -421,8 +421,8 @@ struct MovieListView: View {
     private func likeMovie(movie: Movie) {
         guard let userId = Auth.auth().currentUser?.uid else { return }
         let db = Firestore.firestore()
-        var previousCreatorLikes: [Int] = []
-        var previousUserLikes: [Int] = []
+        var previousCoincidencesCount = 0
+
         let salaCode = salaCodigo // `salaCodigo` es un Binding, por lo que directamente lo usamos aquí
         let salaDoc = db.collection("salas").document(salaCode)
         
@@ -505,9 +505,6 @@ struct MovieListView: View {
                     } else {
                         print("Documento creado y 'like' añadido correctamente.")
                     }
-                    if !coincidencias.isEmpty {
-                        showMatchAnimation()
-                    }
                 }
             }
         }
@@ -520,56 +517,30 @@ struct MovieListView: View {
                 let data = documentSnapshot.data()
                 let creatorLikes = data?["creatorLikes"] as? [Int] ?? []
                 let userLikes = data?["userLikes"] as? [Int] ?? []
-                let coincidencias = Array(Set(creatorLikes).intersection(Set(userLikes)))
                 
-                print("Coincidencias actualizadas: \(coincidencias)")
+                // Obtener las coincidencias actuales
+                let currentCoincidences = Array(Set(creatorLikes).intersection(Set(userLikes)))
+                
+                // Comprobar si la cantidad de coincidencias ha aumentado
+                if currentCoincidences.count == previousCoincidencesCount + 1 {
+                    print("Coincidencia agregada: \(currentCoincidences.last ?? -1)")
+                    print("MATCH")
 
-                // Comprobar si se ha añadido un nuevo valor a la lista
-                let newLikes = Set(creatorLikes).subtracting(previousCreatorLikes).count > 0 || Set(userLikes).subtracting(previousUserLikes).count > 0
-                
-                if newLikes {
-                    // Si hay coincidencias, mostrar animación
-                    if !coincidencias.isEmpty {
-                        showMatchAnimation()
-                    }
+                    // Aquí puedes realizar cualquier acción que desees al detectar que se agregó una nueva coincidencia
                 }
-
-                // Actualizar los valores anteriores de "creatorLikes" y "userLikes"
-                previousCreatorLikes = creatorLikes
-                previousUserLikes = userLikes
+                
+                // Actualizar la cantidad de coincidencias anteriores
+                previousCoincidencesCount = currentCoincidences.count
             }
         }
-    }
-    // Función para mostrar animación de "Match"
-    private func showMatchAnimation() {
-        // Crear un UILabel que aparecerá con la animación de "Match"
-        let matchLabel = UILabel()
-        matchLabel.text = "¡Match!"
-        matchLabel.font = UIFont.boldSystemFont(ofSize: 32)
-        matchLabel.textColor = .white
-        matchLabel.textAlignment = .center
-        matchLabel.alpha = 0.0
+
         
-        // Agregar el label al top view
-        if let topController = UIApplication.shared.keyWindow?.rootViewController {
-            topController.view.addSubview(matchLabel)
-            
-            // Configurar el tamaño y posición
-            matchLabel.frame = CGRect(x: 0, y: 100, width: topController.view.frame.width, height: 50)
-            
-            // Animación de aparición
-            UIView.animate(withDuration: 0.5, animations: {
-                matchLabel.alpha = 1.0
-            }) { _ in
-                // Después de mostrar la animación, desaparecer
-                UIView.animate(withDuration: 0.5, delay: 1.0, options: [], animations: {
-                    matchLabel.alpha = 0.0
-                }) { _ in
-                    matchLabel.removeFromSuperview()  // Eliminar el label después de la animación
-                }
-            }
-        }
+
     }
+
+
+   
+
     private func logoutUser() {
         do {
             try Auth.auth().signOut()
