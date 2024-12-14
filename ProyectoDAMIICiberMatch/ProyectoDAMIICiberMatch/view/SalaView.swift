@@ -421,7 +421,8 @@ struct MovieListView: View {
     private func likeMovie(movie: Movie) {
         guard let userId = Auth.auth().currentUser?.uid else { return }
         let db = Firestore.firestore()
-        
+        var previousCoincidences: Set<Int> = []
+
         let salaCode = salaCodigo // `salaCodigo` es un Binding, por lo que directamente lo usamos aquí
         let salaDoc = db.collection("salas").document(salaCode)
         
@@ -504,6 +505,9 @@ struct MovieListView: View {
                     } else {
                         print("Documento creado y 'like' añadido correctamente.")
                     }
+                    if !coincidencias.isEmpty {
+                        showMatchAnimation()
+                    }
                 }
             }
         }
@@ -516,14 +520,21 @@ struct MovieListView: View {
                 let data = documentSnapshot.data()
                 let creatorLikes = data?["creatorLikes"] as? [Int] ?? []
                 let userLikes = data?["userLikes"] as? [Int] ?? []
-                let coincidencias = Array(Set(creatorLikes).intersection(Set(userLikes)))
+                let coincidencias = Set(creatorLikes).intersection(Set(userLikes))
                 
+                // Imprimir coincidencias
                 print("Coincidencias actualizadas: \(coincidencias)")
-                // Aquí puedes hacer lo que necesites con las coincidencias, como actualizar la UI.
-                // Si hay coincidencias, mostrar animación
-                            if !coincidencias.isEmpty {
-                                showMatchAnimation()
-                            }
+                
+                // Verificar si hay nuevos elementos en las coincidencias
+                let newMatches = coincidencias.subtracting(previousCoincidences)
+                
+                // Si hay nuevos elementos en las coincidencias, mostrar la animación
+                if !newMatches.isEmpty {
+                    showMatchAnimation()
+                }
+                
+                // Actualizar las coincidencias previas
+                previousCoincidences = coincidencias
             }
         }
     }
