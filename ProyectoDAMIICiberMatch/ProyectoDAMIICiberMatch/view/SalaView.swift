@@ -525,7 +525,7 @@ struct MovieListView: View {
                 if currentCoincidences.count == previousCoincidencesCount + 1 {
                     print("Coincidencia agregada: \(currentCoincidences.last ?? -1)")
                     print("MATCH")
-
+                    showMatchAnimation()
                     // Aquí puedes realizar cualquier acción que desees al detectar que se agregó una nueva coincidencia
                 }
                 
@@ -538,7 +538,36 @@ struct MovieListView: View {
 
     }
 
-
+    // Función para mostrar animación de "Match"
+    private func showMatchAnimation() {
+        // Crear un UILabel que aparecerá con la animación de "Match"
+        let matchLabel = UILabel()
+        matchLabel.text = "¡Match!"
+        matchLabel.font = UIFont.boldSystemFont(ofSize: 32)
+        matchLabel.textColor = .white
+        matchLabel.textAlignment = .center
+        matchLabel.alpha = 0.0
+        
+        // Agregar el label al top view
+        if let topController = UIApplication.shared.keyWindow?.rootViewController {
+            topController.view.addSubview(matchLabel)
+            
+            // Configurar el tamaño y posición
+            matchLabel.frame = CGRect(x: 0, y: 100, width: topController.view.frame.width, height: 50)
+            
+            // Animación de aparición
+            UIView.animate(withDuration: 0.5, animations: {
+                matchLabel.alpha = 1.0
+            }) { _ in
+                // Después de mostrar la animación, desaparecer
+                UIView.animate(withDuration: 0.5, delay: 1.0, options: [], animations: {
+                    matchLabel.alpha = 0.0
+                }) { _ in
+                    matchLabel.removeFromSuperview()  // Eliminar el label después de la animación
+                }
+            }
+        }
+    }
    
 
     private func logoutUser() {
