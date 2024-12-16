@@ -27,9 +27,9 @@ struct LoginView: View {
             .edgesIgnoringSafeArea(.all)
 
             VStack {
-                Spacer()
+                Spacer() // Empuja el contenido hacia abajo
 
-                // Caja principal con fondo y bordes redondeados
+                // Caja principal con fondo y bordes redondeados (centrada)
                 VStack(spacing: 20) {
                     // Título centrado y colocado más abajo, ahora a la altura del campo de correo
                     VStack {
@@ -149,14 +149,9 @@ struct LoginView: View {
                 .background(Color.white.opacity(0.85)) // Fondo blanco semi-transparente para los campos
                 .cornerRadius(16)
                 .shadow(radius: 10) // Sombra para darle un efecto de profundidad
+                .frame(maxWidth: 400) // Limitar el ancho del contenedor (opcional)
 
-                // NavigationLink que redirige a SalaView cuando el login es exitoso
-                NavigationLink(
-                    destination: SalaView(),
-                    isActive: $isLoggedIn // Redirige solo si el usuario ha iniciado sesión correctamente
-                ) {
-                    EmptyView() // Devolvemos una vista vacía para evitar que se vea un botón
-                }
+                Spacer() // Empuja el contenido hacia arriba
             }
             .padding(.horizontal, 20)
             .frame(maxHeight: .infinity, alignment: .center) // Centrar el contenido verticalmente
