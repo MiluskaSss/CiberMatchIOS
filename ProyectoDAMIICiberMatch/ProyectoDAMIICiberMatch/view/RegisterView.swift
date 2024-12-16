@@ -17,12 +17,20 @@ struct RegisterView: View {
             VStack {
                 Spacer()
                 
-                Text("¡Bienvenido a MealsApp!")
+                Text("¡Registrate!")
                     .font(.largeTitle)
                     .fontWeight(.bold)
                     .foregroundColor(.white) // Color blanco para el título
-                    .padding(.bottom, 30)
+                    .padding(.bottom, 10)
                     .multilineTextAlignment(.center) // Centrado del título
+                
+                // Ícono debajo del título
+                Image(systemName: "person.crop.circle.fill.badge.plus") // Ícono de usuario con un +
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 80, height: 80) // Tamaño del ícono
+                    .foregroundColor(.yellow) // Color amarillo brillante
+                    .padding(.bottom, 30) // Espaciado debajo del ícono
                 
                 // Caja de registro
                 VStack(spacing: 20) {
@@ -115,3 +123,4 @@ struct RegisterView: View {
 #Preview {
     RegisterView()
 }
+

@@ -33,7 +33,7 @@ struct LoginView: View {
                 VStack(spacing: 20) {
                     // Título centrado y colocado más abajo, ahora a la altura del campo de correo
                     VStack {
-                        Text("¡Bienvenido de nuevo!")
+                        Text("¡Bienvenido a CineMatch!")
                             .font(.system(size: 36, weight: .bold))
                             .foregroundColor(.white)
                             .multilineTextAlignment(.center)
