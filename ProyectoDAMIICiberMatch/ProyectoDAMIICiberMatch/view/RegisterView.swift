@@ -68,10 +68,8 @@ struct RegisterView: View {
                     HStack {
                         Text("¿Ya tienes cuenta?")
                             .foregroundColor(Color.gray)
-                        Button(action: {
-                            // Aquí podrías agregar la lógica para cambiar a la vista de login
-                        }) {
-                            Text("Inicia sesión")
+                        NavigationLink(destination: LoginView()) {
+                            Text("Iniciar Sesion")
                                 .foregroundColor(Color(hex: "#0066cc")) // Azul
                                 .fontWeight(.bold)
                         }
@@ -89,6 +87,7 @@ struct RegisterView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity) // Asegura que el VStack ocupe todo el espacio disponible
             .multilineTextAlignment(.center) // Centrado del contenido
         }
+        .navigationBarBackButtonHidden(true) // Ocultar el botón de retroceso en RegisterView
     }
     
     private func registerUser() {

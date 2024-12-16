@@ -6,8 +6,8 @@ struct LoginView: View {
     @State private var password: String = ""
     @State private var errorMessage: String = ""
     @State private var isLoggingIn: Bool = false
-    @State private var isLoggedIn: Bool = false
-    
+    @State private var isLoggedIn: Bool = false // Nueva propiedad para manejar la navegación
+
     private var isEmailValid: Bool {
         email.contains("@") && email.contains(".")
     }
@@ -17,149 +17,151 @@ struct LoginView: View {
     }
 
     var body: some View {
-        NavigationView {
-            ZStack {
-                // Fondo con gradiente neón combinando azul marino, azul y negro
-                LinearGradient(
-                    gradient: Gradient(colors: [Color(hex: "#001f3d"), Color(hex: "#0066cc"), Color(hex: "#000000")]),
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .edgesIgnoringSafeArea(.all)
-                
-                VStack {
-                    Spacer()
+        ZStack {
+            // Fondo con gradiente neón combinando azul marino, azul y negro
+            LinearGradient(
+                gradient: Gradient(colors: [Color(hex: "#001f3d"), Color(hex: "#0066cc"), Color(hex: "#000000")]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .edgesIgnoringSafeArea(.all)
 
-                    // Caja principal con fondo y bordes redondeados
-                    VStack(spacing: 20) {
-                        // Título centrado y colocado más abajo, ahora a la altura del campo de correo
-                        VStack {
-                            Text("¡Bienvenido de nuevo!")
-                                .font(.system(size: 36, weight: .bold))
-                                .foregroundColor(.white)
-                                .multilineTextAlignment(.center)
-                                .shadow(radius: 10) // Sombra para dar un toque neón
-                            
-                            // Ícono relacionado con película en color amarillo
-                            Image(systemName: "film.fill") // Ícono relacionado con película
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 80, height: 80) // Aumentamos el tamaño del ícono
-                                .foregroundColor(.yellow) // Ícono amarillo brillante
-                        }
-                        .padding(.bottom, 40) // Separar más de los campos de texto
+            VStack {
+                Spacer()
 
-                        // Caja para los campos de texto (correo y contraseña)
-                        VStack(spacing: 15) {
-                            // Campo para correo
-                            ZStack(alignment: .leading) {
-                                HStack {
-                                    Image(systemName: "envelope.fill") // Ícono de correo
-                                        .foregroundColor(Color(hex: "#1A1A1A")) // Ícono más oscuro
-                                        .font(.system(size: 24)) // Ajustamos el tamaño del ícono
-                                        .padding(.leading, 16)
-                                    Spacer()
-                                }
-                                .frame(height: 50)
+                // Caja principal con fondo y bordes redondeados
+                VStack(spacing: 20) {
+                    // Título centrado y colocado más abajo, ahora a la altura del campo de correo
+                    VStack {
+                        Text("¡Bienvenido de nuevo!")
+                            .font(.system(size: 36, weight: .bold))
+                            .foregroundColor(.white)
+                            .multilineTextAlignment(.center)
+                            .shadow(radius: 10) // Sombra para dar un toque neón
+                        
+                        // Ícono relacionado con película en color amarillo
+                        Image(systemName: "film.fill") // Ícono relacionado con película
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 80, height: 80) // Aumentamos el tamaño del ícono
+                            .foregroundColor(.yellow) // Ícono amarillo brillante
+                    }
+                    .padding(.bottom, 40) // Separar más de los campos de texto
 
-                                TextField("Correo electrónico", text: $email)
-                                    .padding(.leading, 40) // Espacio para el ícono
-                                    .padding()
-                                    .background(Color.white.opacity(0.8)) // Fondo blanco con opacidad
-                                    .cornerRadius(12)
-                                    .foregroundColor(.black)
-                                    .textInputAutocapitalization(.never)
-                                    .autocorrectionDisabled()
-                                    .keyboardType(.emailAddress)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 12)
-                                            .stroke(Color.white.opacity(0.5), lineWidth: 1)
-                                    )
-                                    .shadow(color: Color.blue.opacity(0.6), radius: 8, x: 0, y: 0) // Sombra neón
-                            }
-
-                            // Campo para contraseña
-                            ZStack(alignment: .leading) {
-                                HStack {
-                                    Image(systemName: "lock.fill") // Ícono de candado
-                                        .foregroundColor(Color(hex: "#1A1A1A")) // Ícono más oscuro
-                                        .font(.system(size: 24)) // Ajustamos el tamaño del ícono
-                                        .padding(.leading, 16)
-                                    Spacer()
-                                }
-                                .frame(height: 50)
-
-                                SecureField("Contraseña", text: $password)
-                                    .padding(.leading, 40) // Espacio para el ícono
-                                    .padding()
-                                    .background(Color.white.opacity(0.8)) // Fondo blanco con opacidad
-                                    .cornerRadius(12)
-                                    .foregroundColor(.black)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 12)
-                                            .stroke(Color.white.opacity(0.5), lineWidth: 1)
-                                    )
-                                    .shadow(color: Color.blue.opacity(0.6), radius: 8, x: 0, y: 0) // Sombra neón
-                            }
-
-                            // Mensaje de error
-                            if !errorMessage.isEmpty {
-                                Text(errorMessage)
-                                    .foregroundColor(Color(hex: "#FF4C61")) // Rojo claro para errores
-                                    .fontWeight(.bold)
-                            }
-
-                            // Botón de inicio de sesión con fondo azul brillante (azul caribeño)
-                            Button(action: loginUser) {
-                                Text(isLoggingIn ? "Iniciando sesión..." : "Iniciar Sesión")
-                                    .font(.headline)
-                                    .fontWeight(.bold)
-                                    .padding()
-                                    .frame(maxWidth: .infinity)
-                                    .background(
-                                        isEmailValid && isPasswordValid ? Color(hex: "#0028ff") : Color(hex: "#0028ff")
-                                    )
-                                    .cornerRadius(12)
-                                    .foregroundColor(.white)
-                                    .shadow(radius: 10)  // Sombra para darle un efecto de profundidad
-                                    .scaleEffect(isLoggingIn ? 0.95 : 1)  // Reducir ligeramente cuando se está presionando
-                                    .animation(.easeInOut(duration: 0.2), value: isLoggingIn)  // Animación suave
-                                    .opacity(isEmailValid && isPasswordValid ? 1.0 : 0.7) // Cambiar opacidad si está deshabilitado
-                                    .padding(.top, 20) // Añadir un poco más de espacio en la parte superior
-                            }
-                            .disabled(!isEmailValid || !isPasswordValid || isLoggingIn)
-
-                            // Navegación a SalaView
-                            NavigationLink(
-                                destination: SalaView()
-                                    .navigationBarBackButtonHidden(true),
-                                isActive: $isLoggedIn
-                            ) {
-                                EmptyView()
-                            }
-
-                            // Opción para registrarse
+                    // Caja para los campos de texto (correo y contraseña)
+                    VStack(spacing: 15) {
+                        // Campo para correo
+                        ZStack(alignment: .leading) {
                             HStack {
-                                Text("¿No tienes cuenta?")
-                                    .foregroundColor(.white)
-                                    .font(.subheadline)
-                                NavigationLink("Registrarse", destination: RegisterView())
+                                Image(systemName: "envelope.fill") // Ícono de correo
+                                    .foregroundColor(Color(hex: "#1A1A1A")) // Ícono más oscuro
+                                    .font(.system(size: 24)) // Ajustamos el tamaño del ícono
+                                    .padding(.leading, 16)
+                                Spacer()
+                            }
+                            .frame(height: 50)
+
+                            TextField("Correo electrónico", text: $email)
+                                .padding(.leading, 40) // Espacio para el ícono
+                                .padding()
+                                .background(Color.white.opacity(0.8)) // Fondo blanco con opacidad
+                                .cornerRadius(12)
+                                .foregroundColor(.black)
+                                .textInputAutocapitalization(.never)
+                                .autocorrectionDisabled()
+                                .keyboardType(.emailAddress)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(Color.white.opacity(0.5), lineWidth: 1)
+                                )
+                                .shadow(color: Color.blue.opacity(0.6), radius: 8, x: 0, y: 0) // Sombra neón
+                        }
+
+                        // Campo para contraseña
+                        ZStack(alignment: .leading) {
+                            HStack {
+                                Image(systemName: "lock.fill") // Ícono de candado
+                                    .foregroundColor(Color(hex: "#1A1A1A")) // Ícono más oscuro
+                                    .font(.system(size: 24)) // Ajustamos el tamaño del ícono
+                                    .padding(.leading, 16)
+                                Spacer()
+                            }
+                            .frame(height: 50)
+
+                            SecureField("Contraseña", text: $password)
+                                .padding(.leading, 40) // Espacio para el ícono
+                                .padding()
+                                .background(Color.white.opacity(0.8)) // Fondo blanco con opacidad
+                                .cornerRadius(12)
+                                .foregroundColor(.black)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(Color.white.opacity(0.5), lineWidth: 1)
+                                )
+                                .shadow(color: Color.blue.opacity(0.6), radius: 8, x: 0, y: 0) // Sombra neón
+                        }
+
+                        // Mensaje de error
+                        if !errorMessage.isEmpty {
+                            Text(errorMessage)
+                                .foregroundColor(Color(hex: "#FF4C61")) // Rojo claro para errores
+                                .fontWeight(.bold)
+                        }
+
+                        // Botón de inicio de sesión
+                        Button(action: loginUser) {
+                            Text(isLoggingIn ? "Iniciando sesión..." : "Iniciar sesión")
+                                .font(.headline)
+                                .fontWeight(.bold)
+                                .padding()
+                                .frame(maxWidth: .infinity)
+                                .background(
+                                    isEmailValid && isPasswordValid ? Color(hex: "#0028ff") : Color(hex: "#0028ff")
+                                )
+                                .cornerRadius(12)
+                                .foregroundColor(.white)
+                                .shadow(radius: 10)
+                                .scaleEffect(isLoggingIn ? 0.95 : 1)
+                                .animation(.easeInOut(duration: 0.2), value: isLoggingIn)
+                                .opacity(isEmailValid && isPasswordValid ? 1.0 : 0.7)
+                                .padding(.top, 20)
+                        }
+                        .disabled(!isEmailValid || !isPasswordValid || isLoggingIn)
+                    }
+
+                    // Opción para registrarse
+                    HStack {
+                        Text("¿No tienes cuenta?")
+                            .foregroundColor(.white)
+                            .font(.subheadline)
+                        NavigationLink(
+                            destination: RegisterView(),
+                            label: {
+                                Text("Registrarse")
                                     .font(.subheadline)
                                     .fontWeight(.bold)
                                     .foregroundColor(Color(hex: "#0028ff")) // Color ligeramente más claro
                                     .padding(.top, 8) // Espaciado superior para que no se vea tan pegado
-                            }
-                        }
-                        .padding() // Relleno alrededor de los campos de texto y botones
-                        .background(Color.white.opacity(0.85)) // Fondo blanco semi-transparente para los campos
-                        .cornerRadius(16)
-                        .shadow(radius: 10) // Sombra para darle un efecto de profundidad
+                            })
                     }
-                    .padding(.horizontal, 20)
-                    .frame(maxHeight: .infinity, alignment: .center) // Centrar el contenido verticalmente
+                }
+                .padding() // Relleno alrededor de los campos de texto y botones
+                .background(Color.white.opacity(0.85)) // Fondo blanco semi-transparente para los campos
+                .cornerRadius(16)
+                .shadow(radius: 10) // Sombra para darle un efecto de profundidad
+
+                // NavigationLink que redirige a SalaView cuando el login es exitoso
+                NavigationLink(
+                    destination: SalaView(),
+                    isActive: $isLoggedIn // Redirige solo si el usuario ha iniciado sesión correctamente
+                ) {
+                    EmptyView() // Devolvemos una vista vacía para evitar que se vea un botón
                 }
             }
+            .padding(.horizontal, 20)
+            .frame(maxHeight: .infinity, alignment: .center) // Centrar el contenido verticalmente
         }
+        .navigationBarBackButtonHidden(true) // Ocultar el botón de retroceso en LoginView
     }
 
     private func loginUser() {
@@ -187,7 +189,7 @@ struct LoginView: View {
             if let error = error {
                 errorMessage = error.localizedDescription
             } else {
-                isLoggedIn = true
+                isLoggedIn = true // Cambiamos el estado a true cuando el login es exitoso
                 print("Usuario inició sesión: \(String(describing: result?.user.email))")
             }
         }
