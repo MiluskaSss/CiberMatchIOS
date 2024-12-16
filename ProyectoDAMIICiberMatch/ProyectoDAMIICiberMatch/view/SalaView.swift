@@ -368,8 +368,8 @@ struct MovieListView: View {
     @State private var navigateToLogin: Bool = false
     @Binding var salaCodigo: String
 
-    
     @State private var salaCode: String? = nil
+    @State private var salaListener: ListenerRegistration? = nil
     
     let baseImageURL = "https://image.tmdb.org/t/p/w500"
     
@@ -450,7 +450,7 @@ struct MovieListView: View {
                             
                             // Botón "Me gusta"
                             Button(action: {
-                                likeMovie(movie: viewModel.movies[currentIndex]) // Llamamos la función pasando el objeto completo Movie
+                                likeMovie(movie: viewModel.movies[currentIndex], codigoSala: salaCodigo) // Ahora pasamos también el código de la sala
                                 currentIndex += 1
                             }) {
                                 Image(systemName: "heart.fill")
@@ -478,6 +478,10 @@ struct MovieListView: View {
                 }
                 .onAppear {
                     viewModel.getPopularMovies()
+                    setupSalaListener()  // Configura el listener de Firestore
+                }
+                .onDisappear {
+                    salaListener?.remove()  // Elimina el listener cuando la vista desaparece
                 }
                 .alert(isPresented: $showLogoutAlert) {
                     Alert(
@@ -498,82 +502,236 @@ struct MovieListView: View {
         }
     }
     
-    private func likeMovie(movie: Movie) {
+    // Método para configurar el listener que escucha cambios en la sala
+    private func setupSalaListener() {
+        let db = Firestore.firestore()
+        let salaDoc = db.collection("salas").document(salaCodigo)
+        
+        // Configura el listener para escuchar los cambios en el documento de la sala
+        salaListener = salaDoc.addSnapshotListener { document, error in
+            if let error = error {
+                print("Error al escuchar cambios en la sala: \(error.localizedDescription)")
+                return
+            }
+            
+            guard let document = document, document.exists else {
+                print("El documento de la sala no existe.")
+                return
+            }
+            
+            let data = document.data() ?? [:]
+            let creatorId = data["creadorID"] as? String
+            
+            // Aquí podrías realizar una lógica adicional cuando el código de la sala se actualiza
+            // o se detecten cambios en el documento de la sala.
+            print("Sala actualizada con ID de creador: \(creatorId ?? "Desconocido")")
+        }
+    }
+
+    // Método para dar "like" a una película
+    func likeMovie(movie: Movie, codigoSala: String) {
         guard let userId = Auth.auth().currentUser?.uid else { return }
         let db = Firestore.firestore()
-        var previousCoincidences: Set<Int> = []
-
-        let salaCode = salaCodigo // Binding directo
-        let salaDoc = db.collection("salas").document(salaCode)
+        let salaDoc = db.collection("salas").document(codigoSala)  // Se pasa codigoSala aquí
+        let coincidenciasDoc = db.collection("coincidencias").document(codigoSala)  // Se pasa codigoSala aquí
         
+        // Obtener el documento de la sala
         salaDoc.getDocument { document, error in
-            if let document = document, document.exists {
-                let creatorId = document.data()?["creadorID"] as? String
-                
-                // Recuperamos los arrays existentes
-                if var currentCreatorLikes = document.data()?["creatorLikes"] as? [Int],
-                   var currentUserLikes = document.data()?["userLikes"] as? [Int] {
-                    
-                    // Si el usuario es el creador de la sala
-                    if userId == creatorId {
-                        // Añadir el "like" del creador de la sala
-                        if !currentCreatorLikes.contains(movie.id) {
-                            currentCreatorLikes.append(movie.id)
-                        }
-                    } else {
-                        // Añadir el "like" del usuario
-                        if !currentUserLikes.contains(movie.id) {
-                            currentUserLikes.append(movie.id)
-                        }
-                    }
-                    
-                    // Calcular las coincidencias actuales
-                    let currentCoincidences = Set(currentCreatorLikes).intersection(Set(currentUserLikes))
-                    
-                    // Actualizar Firestore
-                    salaDoc.updateData([
-                        "creatorLikes": currentCreatorLikes,
-                        "userLikes": currentUserLikes,
-                        "coincidencia": Array(currentCoincidences)
-                    ]) { error in
-                        if let error = error {
-                            print("Error al actualizar datos: \(error.localizedDescription)")
-                        } else {
-                            print("Datos actualizados correctamente.")
-                        }
-                    }
-                }
-            }
-        }
-        
-        // Escuchar cambios en el documento
-        salaDoc.addSnapshotListener { documentSnapshot, error in
             if let error = error {
-                print("Error al escuchar cambios: \(error.localizedDescription)")
-            } else if let documentSnapshot = documentSnapshot, documentSnapshot.exists {
-                let data = documentSnapshot.data()
-                let creatorLikes = data?["creatorLikes"] as? [Int] ?? []
-                let userLikes = data?["userLikes"] as? [Int] ?? []
+                print("Error al obtener el documento de la sala: \(error.localizedDescription)")
+                return
+            }
+            
+            if let document = document, document.exists {
+                let data = document.data() ?? [:]
+                let creatorId = data["creadorID"] as? String
                 
-                // Obtener las coincidencias actuales
-                let currentCoincidences = Set(creatorLikes).intersection(Set(userLikes))
+                // Recuperar los likes actuales de los usuarios
+                var currentCreatorLikes = data["creatorLikes"] as? [Int] ?? []
+                var currentUserLikes = data["userLikes"] as? [Int] ?? []
                 
-                // Detectar coincidencias nuevas
-                let newCoincidences = currentCoincidences.subtracting(previousCoincidences)
-                
-                // Imprimir "MATCH" solo para las nuevas coincidencias
-                for _ in newCoincidences {
-                    print("MATCH")
+                // Actualizar los likes según el usuario
+                if userId == creatorId {
+                    if !currentCreatorLikes.contains(movie.id) {
+                        currentCreatorLikes.append(movie.id)
+                    }
+                } else {
+                    if !currentUserLikes.contains(movie.id) {
+                        currentUserLikes.append(movie.id)
+                    }
                 }
                 
-                // Actualizar el estado anterior
-                previousCoincidences = currentCoincidences
+                // Actualizar Firestore con los likes actualizados
+                salaDoc.updateData([
+                    "creatorLikes": currentCreatorLikes,
+                    "userLikes": currentUserLikes
+                ]) { error in
+                    if let error = error {
+                        print("Error al actualizar los likes: \(error.localizedDescription)")
+                    } else {
+                        print("Likes actualizados correctamente.")
+                        
+                        // Verificar coincidencias
+                        self.checkAndUpdateCoincidences(
+                            coincidenciasDoc: coincidenciasDoc,
+                            creatorLikes: currentCreatorLikes,
+                            userLikes: currentUserLikes,
+                            creatorId: creatorId,
+                            userId: userId,
+                            movieId: movie.id,
+                            codigoSala: codigoSala  // Se pasa codigoSala aquí
+                        )
+                    }
+                }
             }
         }
     }
 
+    // Método para verificar y actualizar coincidencias
+    private func checkAndUpdateCoincidences(
+        coincidenciasDoc: DocumentReference,
+        creatorLikes: [Int],
+        userLikes: [Int],
+        creatorId: String?,
+        userId: String?,
+        movieId: Int,
+        codigoSala: String  // Se agrega codigoSala como parámetro
+    ) {
+        let db = Firestore.firestore()
+        
+        // Verificar si hay una coincidencia en la película actual
+        if creatorLikes.contains(movieId) && userLikes.contains(movieId) {
+            coincidenciasDoc.getDocument { document, error in
+                if let error = error {
+                    print("Error al obtener el documento de coincidencias: \(error.localizedDescription)")
+                    return
+                }
+                
+                var coincidencesList = document?.data()?["coincidencias"] as? [Int] ?? []
+                
+                // Si la coincidencia ya está registrada, no hacer nada
+                if coincidencesList.contains(movieId) {
+                    print("La coincidencia ya está registrada.")
+                    return
+                }
+                
+                // Agregar la nueva coincidencia
+                coincidencesList.append(movieId)
+                
+                coincidenciasDoc.setData(["coincidencias": coincidencesList], merge: true) { error in
+                    if let error = error {
+                        print("Error al actualizar coincidencias: \(error.localizedDescription)")
+                    } else {
+                        print("Coincidencia registrada correctamente.")
+                        
+                        // Enviar mensaje de match a ambos usuarios
+                        self.sendMatchMessage(
+                            creatorId: creatorId,
+                            userId: userId,
+                            movieId: movieId,
+                            codigoSala: codigoSala  // Se pasa codigoSala aquí
+                        )
+                    }
+                }
+            }
+        } else {
+            print("No hay coincidencia para esta película.")
+        }
+    }
 
-  
+
+    private func sendMatchMessage(creatorId: String?, userId: String?, movieId: Int, codigoSala: String?) {
+        // Verificar si creatorId, userId y codigoSala son válidos
+        guard let creatorId = creatorId, let userId = userId, let codigoSala = codigoSala else {
+            print("Error: Faltan parámetros necesarios.")
+            return
+        }
+        
+        let db = Firestore.firestore()
+        
+        // Crear el mensaje con el codigoSala
+        let message = "¡Match encontrado en la película con ID \(movieId) en la sala \(codigoSala)!"
+        
+        // Actualizar el array de usuarios conectados y agregar el mensaje
+        let salaDoc = db.collection("salas").document(codigoSala)
+        
+        // Actualizar el array de mensajes en la sala
+        salaDoc.updateData([
+            "mensajes": FieldValue.arrayUnion([message]),
+            "usuariosConectados": FieldValue.arrayUnion([creatorId, userId]) // Asegúrate de agregar los usuarios conectados
+        ]) { error in
+            if let error = error {
+                print("Error al enviar mensaje a la sala: \(error.localizedDescription)")
+            } else {
+                print("Mensaje enviado a la sala \(codigoSala).")
+            }
+        }
+        
+        // Actualizar los mensajes de los usuarios
+        let creatorDoc = db.collection("usuarios").document(creatorId)
+        let userDoc = db.collection("usuarios").document(userId)
+        
+        creatorDoc.updateData(["mensajes": FieldValue.arrayUnion([message])]) { error in
+            if let error = error {
+                print("Error al enviar mensaje al creador: \(error.localizedDescription)")
+            } else {
+                print("Mensaje enviado al creador.")
+            }
+        }
+        
+        userDoc.updateData(["mensajes": FieldValue.arrayUnion([message])]) { error in
+            if let error = error {
+                print("Error al enviar mensaje al usuario: \(error.localizedDescription)")
+            } else {
+                print("Mensaje enviado al usuario.")
+            }
+        }
+    }
+
+    private func startListeningForMessages(codigoSala: String?, viewController: UIViewController) {
+        guard let codigoSala = codigoSala else {
+            print("Error: Faltan parámetros necesarios.")
+            return
+        }
+        
+        let db = Firestore.firestore()
+        
+        // Obtener la referencia al documento de la sala
+        let salaDoc = db.collection("salas").document(codigoSala)
+        
+        // Escuchar los cambios en el campo "mensajes" de la sala
+        salaDoc.addSnapshotListener { documentSnapshot, error in
+            guard let document = documentSnapshot, document.exists else {
+                print("No se encontró el documento de la sala o ocurrió un error: \(error?.localizedDescription ?? "Desconocido")")
+                return
+            }
+            
+            // Obtener el array de mensajes
+            if let mensajes = document.get("mensajes") as? [String], !mensajes.isEmpty {
+                // Aquí puedes actualizar la interfaz con los nuevos mensajes
+                print("Mensajes recibidos: \(mensajes)")
+                
+                // Mostrar un alert con el mensaje "Match"
+                showMatchAlert(viewController: viewController)
+            } else {
+                print("No se encontraron mensajes en la sala.")
+            }
+        }
+    }
+
+    private func showMatchAlert(viewController: UIViewController) {
+        // Crear un alert controller con el mensaje
+        let alert = UIAlertController(title: "Match", message: "¡Nuevo Match en la sala!", preferredStyle: .alert)
+        
+        // Agregar un botón para cerrar el alert
+        alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+        
+        // Presentar el alert
+        viewController.present(alert, animated: true, completion: nil)
+    }
+
+
+
     private func logoutUser() {
         do {
             try Auth.auth().signOut()
@@ -583,7 +741,6 @@ struct MovieListView: View {
         }
     }
 }
-
 
 struct MovieCardView: View {
     let movie: Movie
