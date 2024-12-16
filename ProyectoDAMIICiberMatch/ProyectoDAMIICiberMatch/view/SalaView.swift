@@ -92,7 +92,7 @@ struct CrearSalaView: View {
                     .cornerRadius(10)
                 
                 if isSalaCreada {
-                    Text("¡Sala guardada en Firebase!")
+                    Text("¡Sala guardada en Firebase con estado Activo!")
                         .foregroundColor(.green)
                     
                     // NavigationLink para redirigir a MovieListView
@@ -108,6 +108,21 @@ struct CrearSalaView: View {
                     }
                     .padding(.top, 20)
                     .transition(.opacity)
+                    
+                    // Botón para actualizar el código
+                    Button(action: {
+                        actualizarCodigo()
+                    }) {
+                        Text("Actualizar código")
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(Color.orange)
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
+                    }
+                    .padding(.top, 10)
                 } else {
                     Button(action: {
                         guardarSalaEnFirebase()
@@ -141,7 +156,8 @@ struct CrearSalaView: View {
         db.collection("salas").document(salaCodigo).setData([
             "codigo": salaCodigo,
             "creadorID": creatorID,
-            "usuariosConectados": [creatorID]
+            "usuariosConectados": [creatorID],
+            "estado": "Activo" // Se guarda como activo al registrar
         ]) { error in
             if let error = error {
                 print("Error al guardar la sala: \(error.localizedDescription)")
@@ -150,7 +166,26 @@ struct CrearSalaView: View {
             }
         }
     }
+
+    private func actualizarCodigo() {
+        // Cambiar el estado de la sala actual a "Inactivo"
+        db.collection("salas").document(salaCodigo).updateData([
+            "estado": "Inactivo"
+        ]) { error in
+            if let error = error {
+                print("Error al actualizar el estado de la sala: \(error.localizedDescription)")
+            } else {
+                print("Estado de la sala anterior cambiado a Inactivo")
+            }
+        }
+
+        // Generar un nuevo código aleatorio
+        salaCodigo = Self.generarCodigoAleatorio()
+        // Habilitar el botón de "Guardar sala"
+        isSalaCreada = false
+    }
 }
+
 
 struct IngresarSalaView: View {
     @Binding var salaCodigo: String
@@ -176,7 +211,7 @@ struct IngresarSalaView: View {
                 .cornerRadius(10)
             
             if !isSalaValida {
-                Text("Código de sala inválido")
+                Text(mensaje)
                     .foregroundColor(.red)
             }
             
@@ -209,6 +244,7 @@ struct IngresarSalaView: View {
         // Asegúrate de que el código de sala no esté vacío
         guard !salaCodigo.isEmpty else {
             mensaje = "Por favor ingresa un código de sala válido."
+            isSalaValida = false
             return
         }
 
@@ -217,23 +253,33 @@ struct IngresarSalaView: View {
         print("Código ingresado: \(salaCodigo)")  // Imprimir el código ingresado
 
         db.collection("salas").document(salaCodigo).getDocument { document, error in
+            isLoading = false
+            
             if let document = document, document.exists {
-                // Si la sala existe, actualiza la lista de usuarios conectados
-                db.collection("salas").document(salaCodigo).updateData([
-                    "usuariosConectados": FieldValue.arrayUnion([usuarioID])
-                ]) { error in
-                    isLoading = false
-                    if let error = error {
-                        print("Error al ingresar a la sala: \(error.localizedDescription)")
-                    } else {
-                        isSalaValida = true
-                        // Ahora que hemos ingresado a la sala, comenzamos a escuchar la sala
-                        escucharSala()
+                let data = document.data() ?? [:]
+                let estado = data["estado"] as? String ?? "Inactivo"
+                
+                if estado == "Activo" {
+                    // Si la sala está activa, se actualiza la lista de usuarios conectados
+                    db.collection("salas").document(salaCodigo).updateData([
+                        "usuariosConectados": FieldValue.arrayUnion([usuarioID])
+                    ]) { error in
+                        if let error = error {
+                            print("Error al ingresar a la sala: \(error.localizedDescription)")
+                        } else {
+                            isSalaValida = true
+                            mensaje = "Sala válida. Redirigiendo..."
+                            // Ahora que hemos ingresado a la sala, comenzamos a escuchar la sala
+                            escucharSala()
+                        }
                     }
+                } else {
+                    // Si la sala no está activa, muestra un mensaje
+                    isSalaValida = false
+                    mensaje = "La sala ha finalizado."
                 }
             } else {
                 // Si la sala no existe, muestra un mensaje
-                isLoading = false
                 isSalaValida = false
                 mensaje = "La sala no existe."
             }
@@ -255,9 +301,6 @@ struct IngresarSalaView: View {
                     // Si el documento existe, imprimimos su contenido
                     print("Documento de la sala escuchado: \(document.data() ?? [:])")
                     
-                    // Imprimimos el código de la sala desde Firestore
-                    print("Código escuchado desde Firestore: \(salaCodigo)")
-
                     if let usuarios = document.data()?["usuariosConectados"] as? [String], usuarios.count > 1 {
                         DispatchQueue.main.async {
                             print("Valor escuchado de usuarios conectados: \(usuarios)")  // Imprimir los usuarios conectados
@@ -273,6 +316,7 @@ struct IngresarSalaView: View {
         }
     }
 }
+
 
 import SwiftUI
 import Firebase
@@ -524,8 +568,7 @@ struct MovieListView: View {
                 // Comprobar si la cantidad de coincidencias ha aumentado
                 if currentCoincidences.count == previousCoincidencesCount + 1 {
                     print("MATCH")
-                    showMatchAnimation()
-                    // Aquí puedes realizar cualquier acción que desees al detectar que se agregó una nueva coincidencia
+            
                 }
                 
                 // Actualizar la cantidad de coincidencias anteriores
@@ -537,38 +580,7 @@ struct MovieListView: View {
 
     }
 
-    // Función para mostrar animación de "Match"
-    private func showMatchAnimation() {
-        // Crear un UILabel que aparecerá con la animación de "Match"
-        let matchLabel = UILabel()
-        matchLabel.text = "¡Match!"
-        matchLabel.font = UIFont.boldSystemFont(ofSize: 32)
-        matchLabel.textColor = .white
-        matchLabel.textAlignment = .center
-        matchLabel.alpha = 0.0
-        
-        // Agregar el label al top view
-        if let topController = UIApplication.shared.keyWindow?.rootViewController {
-            topController.view.addSubview(matchLabel)
-            
-            // Configurar el tamaño y posición
-            matchLabel.frame = CGRect(x: 0, y: 100, width: topController.view.frame.width, height: 50)
-            
-            // Animación de aparición
-            UIView.animate(withDuration: 0.5, animations: {
-                matchLabel.alpha = 1.0
-            }) { _ in
-                // Después de mostrar la animación, desaparecer
-                UIView.animate(withDuration: 0.5, delay: 1.0, options: [], animations: {
-                    matchLabel.alpha = 0.0
-                }) { _ in
-                    matchLabel.removeFromSuperview()  // Eliminar el label después de la animación
-                }
-            }
-        }
-    }
-   
-
+  
     private func logoutUser() {
         do {
             try Auth.auth().signOut()
