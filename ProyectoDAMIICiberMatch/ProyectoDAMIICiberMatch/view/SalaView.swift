@@ -17,43 +17,78 @@ struct SalaView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 30) {
-                Text("Selecciona una opción")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                
-                Button(action: {
-                    showCrearSala = true
-                }) {
-                    Text("Crear una sala")
-                        .font(.title2)
-                        .fontWeight(.semibold)
+            ZStack {
+                // Fondo de gradiente
+                LinearGradient(colors: [Color.blue, Color.purple], startPoint: .top, endPoint: .bottom)
+                    .edgesIgnoringSafeArea(.all)
+
+                VStack(spacing: 40) {
+                    // Título con un ícono representativo de cine
+                    VStack(spacing: 10) {
+                        Image(systemName: "film")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 80, height: 80)
+                            .foregroundColor(.orange)
+
+                        Text("Bienvenido al Cine")
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+                            .foregroundColor(.white)
+                    }
+                    
+                    // Botón para crear una sala
+                    Button(action: {
+                        showCrearSala = true
+                    }) {
+                        HStack {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.title2)
+                                .foregroundColor(.white)
+
+                            Text("Crear una sala")
+                                .font(.title2)
+                                .fontWeight(.semibold)
+                        }
                         .padding()
                         .frame(maxWidth: .infinity)
-                        .background(Color.blue)
+                        .background(LinearGradient(colors: [Color.orange, Color.red], startPoint: .leading, endPoint: .trailing))
+                        .cornerRadius(12)
+                        .shadow(radius: 4)
                         .foregroundColor(.white)
-                        .cornerRadius(10)
-                }
-                
-                Button(action: {
-                    showIngresarSala = true
-                }) {
-                    Text("Ingresar a sala existente")
-                        .font(.title2)
-                        .fontWeight(.semibold)
+                    }
+                    
+                    // Botón para ingresar a una sala existente
+                    Button(action: {
+                        showIngresarSala = true
+                    }) {
+                        HStack {
+                            Image(systemName: "person.2.fill")
+                                .font(.title2)
+                                .foregroundColor(.white)
+
+                            Text("Ingresar a sala existente")
+                                .font(.title2)
+                                .fontWeight(.semibold)
+                        }
                         .padding()
                         .frame(maxWidth: .infinity)
-                        .background(Color.green)
+                        .background(LinearGradient(colors: [Color.orange, Color.red], startPoint: .leading, endPoint: .trailing))
+                        .cornerRadius(12)
+                        .shadow(radius: 4)
                         .foregroundColor(.white)
-                        .cornerRadius(10)
+                    }
+                    
+                    // Mensaje de error si la sala no es válida
+                    if !isSalaValida {
+                        Text(mensaje)
+                            .font(.body)
+                            .foregroundColor(.red)
+                            .padding(.top, 10)
+                    }
                 }
-                
-                if !isSalaValida {
-                    Text(mensaje)
-                        .foregroundColor(.red)
-                }
+                .padding()
             }
-            .padding()
             .navigationDestination(isPresented: $showCrearSala) {
                 CrearSalaView(salaCodigo: $salaCodigo, isSalaCreada: $isSalaCreada, creatorID: $creatorID)
             }
@@ -66,6 +101,7 @@ struct SalaView: View {
         }
     }
 }
+
 
 struct CrearSalaView: View {
     @Binding var salaCodigo: String
@@ -330,10 +366,10 @@ struct MovieListView: View {
     @State private var showLogoutAlert: Bool = false
     @Environment(\.presentationMode) var presentationMode
     @State private var navigateToLogin: Bool = false
-    @Binding var salaCodigo: String // Aquí usamos Binding<String>
+    @Binding var salaCodigo: String
 
     
-    @State private var salaCode: String? = nil // Almacenamos el código de la sala
+    @State private var salaCode: String? = nil
     
     let baseImageURL = "https://image.tmdb.org/t/p/w500"
     
