@@ -501,9 +501,9 @@ struct MovieListView: View {
     private func likeMovie(movie: Movie) {
         guard let userId = Auth.auth().currentUser?.uid else { return }
         let db = Firestore.firestore()
-        var previousCoincidencesCount = 0
+        var previousCoincidences: Set<Int> = []
 
-        let salaCode = salaCodigo // `salaCodigo` es un Binding, por lo que directamente lo usamos aquí
+        let salaCode = salaCodigo // Binding directo
         let salaDoc = db.collection("salas").document(salaCode)
         
         salaDoc.getDocument { document, error in
@@ -512,8 +512,7 @@ struct MovieListView: View {
                 
                 // Recuperamos los arrays existentes
                 if var currentCreatorLikes = document.data()?["creatorLikes"] as? [Int],
-                   var currentUserLikes = document.data()?["userLikes"] as? [Int],
-                   var currentCoincidences = document.data()?["coincidencia"] as? [Int] {
+                   var currentUserLikes = document.data()?["userLikes"] as? [Int] {
                     
                     // Si el usuario es el creador de la sala
                     if userId == creatorId {
@@ -528,68 +527,26 @@ struct MovieListView: View {
                         }
                     }
                     
-                    // Actualizar el array de coincidencias
-                    currentCoincidences = Array(Set(currentCreatorLikes).intersection(Set(currentUserLikes)))
+                    // Calcular las coincidencias actuales
+                    let currentCoincidences = Set(currentCreatorLikes).intersection(Set(currentUserLikes))
                     
-                    // Actualizamos los arrays con los nuevos "likes" y coincidencias
+                    // Actualizar Firestore
                     salaDoc.updateData([
                         "creatorLikes": currentCreatorLikes,
                         "userLikes": currentUserLikes,
-                        "coincidencia": currentCoincidences
+                        "coincidencia": Array(currentCoincidences)
                     ]) { error in
                         if let error = error {
-                            print("Error al agregar el 'like' o la 'coincidencia': \(error.localizedDescription)")
+                            print("Error al actualizar datos: \(error.localizedDescription)")
                         } else {
-                            print("'Like' y 'coincidencia' añadidos correctamente.")
+                            print("Datos actualizados correctamente.")
                         }
-                    }
-                } else {
-                    // Si los arrays no existen, crearlos
-                    var creatorLikes = [Int]()
-                    var userLikes = [Int]()
-                    var coincidencias = [Int]()
-                    
-                    if userId == creatorId {
-                        creatorLikes.append(movie.id) // El creador da el primer "like"
-                    } else {
-                        userLikes.append(movie.id) // Un usuario normal da su "like"
-                    }
-                    
-                    // Establecer los datos iniciales
-                    salaDoc.updateData([
-                        "creatorLikes": creatorLikes,
-                        "userLikes": userLikes,
-                        "coincidencia": coincidencias
-                    ]) { error in
-                        if let error = error {
-                            print("Error al inicializar los 'likes' o 'coincidencia': \(error.localizedDescription)")
-                        } else {
-                            print("Documento creado y 'like' añadido correctamente.")
-                        }
-                    }
-                }
-            } else {
-                // Si el documento no existe, creamos uno nuevo con el código de la sala
-                let creatorLikes = userId == document?.data()?["creadorID"] as? String ? [movie.id] : []
-                let userLikes = userId != document?.data()?["creadorID"] as? String ? [movie.id] : []
-                let coincidencias = Array(Set(creatorLikes).intersection(Set(userLikes))) // Calcular coincidencias
-                
-                salaDoc.setData([
-                    "salaCode": salaCode,  // Guardamos el código de la sala
-                    "creatorLikes": creatorLikes,
-                    "userLikes": userLikes,
-                    "coincidencia": coincidencias // Guardar coincidencias
-                ]) { error in
-                    if let error = error {
-                        print("Error al crear el documento en 'salas': \(error.localizedDescription)")
-                    } else {
-                        print("Documento creado y 'like' añadido correctamente.")
                     }
                 }
             }
         }
         
-        // Escuchar cambios en el documento en tiempo real
+        // Escuchar cambios en el documento
         salaDoc.addSnapshotListener { documentSnapshot, error in
             if let error = error {
                 print("Error al escuchar cambios: \(error.localizedDescription)")
@@ -599,22 +556,22 @@ struct MovieListView: View {
                 let userLikes = data?["userLikes"] as? [Int] ?? []
                 
                 // Obtener las coincidencias actuales
-                let currentCoincidences = Array(Set(creatorLikes).intersection(Set(userLikes)))
+                let currentCoincidences = Set(creatorLikes).intersection(Set(userLikes))
                 
-                // Comprobar si la cantidad de coincidencias ha aumentado
-                if currentCoincidences.count == previousCoincidencesCount + 1 {
+                // Detectar coincidencias nuevas
+                let newCoincidences = currentCoincidences.subtracting(previousCoincidences)
+                
+                // Imprimir "MATCH" solo para las nuevas coincidencias
+                for _ in newCoincidences {
                     print("MATCH")
-            
                 }
                 
-                // Actualizar la cantidad de coincidencias anteriores
-                previousCoincidencesCount = currentCoincidences.count
+                // Actualizar el estado anterior
+                previousCoincidences = currentCoincidences
             }
         }
-
-        
-
     }
+
 
   
     private func logoutUser() {
