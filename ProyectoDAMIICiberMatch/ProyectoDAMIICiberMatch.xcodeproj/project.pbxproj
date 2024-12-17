@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B702F4C22D11A84A0018D52C /* MensajeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B702F4C12D11A84A0018D52C /* MensajeService.swift */; };
+		B702F4C42D11A8D00018D52C /* Mensaje.swift in Sources */ = {isa = PBXBuildFile; fileRef = B702F4C32D11A8D00018D52C /* Mensaje.swift */; };
 		B79486302CFB5B3F0085C202 /* ProyectoDAMIICiberMatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B794862F2CFB5B3F0085C202 /* ProyectoDAMIICiberMatchApp.swift */; };
 		B79486322CFB5B3F0085C202 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B79486312CFB5B3F0085C202 /* ContentView.swift */; };
 		B79486342CFB5B400085C202 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B79486332CFB5B400085C202 /* Assets.xcassets */; };
@@ -59,6 +61,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		B702F4C12D11A84A0018D52C /* MensajeService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MensajeService.swift; sourceTree = "<group>"; };
+		B702F4C32D11A8D00018D52C /* Mensaje.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Mensaje.swift; sourceTree = "<group>"; };
 		B794862C2CFB5B3F0085C202 /* ProyectoDAMIICiberMatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ProyectoDAMIICiberMatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B794862F2CFB5B3F0085C202 /* ProyectoDAMIICiberMatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProyectoDAMIICiberMatchApp.swift; sourceTree = "<group>"; };
 		B79486312CFB5B3F0085C202 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -188,6 +192,7 @@
 			isa = PBXGroup;
 			children = (
 				B79486972CFB5F6A0085C202 /* MovieService.swift */,
+				B702F4C12D11A84A0018D52C /* MensajeService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -196,6 +201,7 @@
 			isa = PBXGroup;
 			children = (
 				B79486992CFB5F990085C202 /* APIResponse.swift */,
+				B702F4C32D11A8D00018D52C /* Mensaje.swift */,
 			);
 			path = Model;
 			sourceTree = "<group>";
@@ -319,8 +325,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				B794864A2CFB5BFE0085C202 /* LoginView.swift in Sources */,
+				B702F4C42D11A8D00018D52C /* Mensaje.swift in Sources */,
 				B79486392CFB5B400085C202 /* Persistence.swift in Sources */,
 				B79486322CFB5B3F0085C202 /* ContentView.swift in Sources */,
+				B702F4C22D11A84A0018D52C /* MensajeService.swift in Sources */,
 				B794869A2CFB5F990085C202 /* APIResponse.swift in Sources */,
 				B79486942CFB5EF80085C202 /* HttpRequestHelper.swift in Sources */,
 				B794864D2CFB5C1C0085C202 /* RegisterView.swift in Sources */,

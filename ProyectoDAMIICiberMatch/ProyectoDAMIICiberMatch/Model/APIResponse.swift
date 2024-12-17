@@ -6,13 +6,18 @@
 //
 
 import Foundation
+import Foundation
+
 struct APIResponse: Decodable {
+    let page: Int
     let results: [Movie]
 
     enum CodingKeys: String, CodingKey {
+        case page
         case results
     }
 }
+
 struct Movie: Decodable, Identifiable {
     let id: Int
     let title: String
@@ -26,4 +31,5 @@ struct Movie: Decodable, Identifiable {
         case overview
     }
 }
+
 

@@ -42,7 +42,7 @@ struct SalaView: View {
                         showCrearSala = true
                     }) {
                         HStack {
-                            Image(systemName: "plus.circle.fill")
+                            Image(systemName: "heart.circle.fill")
                                 .font(.title2)
                                 .foregroundColor(.white)
 
@@ -52,7 +52,7 @@ struct SalaView: View {
                         }
                         .padding()
                         .frame(maxWidth: .infinity)
-                        .background(LinearGradient(colors: [Color.orange, Color.red], startPoint: .leading, endPoint: .trailing))
+                        .background(LinearGradient(colors: [Color.pink, Color.red], startPoint: .leading, endPoint: .trailing))
                         .cornerRadius(12)
                         .shadow(radius: 4)
                         .foregroundColor(.white)
@@ -450,7 +450,16 @@ struct MovieListView: View {
                             
                             // Botón "Me gusta"
                             Button(action: {
-                                likeMovie(movie: viewModel.movies[currentIndex], codigoSala: salaCodigo) // Ahora pasamos también el código de la sala
+                                // Verificar si es necesario cargar más películas
+                                if viewModel.movies.count - currentIndex <= 3 {
+                                    // Cargar más películas si quedan 3 o menos por mostrar
+                                    viewModel.loadMoreMovies()
+                                }
+
+                                // Realizar la acción de "like" en la película actual
+                                likeMovie(movie: viewModel.movies[currentIndex], codigoSala: salaCodigo)
+                                
+                                // Incrementar el índice para pasar a la siguiente película
                                 currentIndex += 1
                             }) {
                                 Image(systemName: "heart.fill")
@@ -459,6 +468,7 @@ struct MovieListView: View {
                                     .padding()
                             }
                             .position(x: UIScreen.main.bounds.width - 50, y: 300)
+
 
                             
                             // Botón "No me gusta"
@@ -478,8 +488,7 @@ struct MovieListView: View {
                 }
                 .onAppear {
                     viewModel.getPopularMovies()
-                    setupSalaListener()  // Configura el listener de Firestore
-                }
+                    setupCoincidenciasListener()                }
                 .onDisappear {
                     salaListener?.remove()  // Elimina el listener cuando la vista desaparece
                 }
@@ -501,30 +510,54 @@ struct MovieListView: View {
             }
         }
     }
-    
-    // Método para configurar el listener que escucha cambios en la sala
-    private func setupSalaListener() {
+    // Método para configurar el listener que escucha cambios en un documento específico dentro de "coincidencias"
+    private func setupCoincidenciasListener() {
         let db = Firestore.firestore()
-        let salaDoc = db.collection("salas").document(salaCodigo)
+        let coincidenciasDoc = db.collection("coincidencias").document(salaCodigo)
         
-        // Configura el listener para escuchar los cambios en el documento de la sala
-        salaListener = salaDoc.addSnapshotListener { document, error in
+        // Configura el listener para el documento específico
+        coincidenciasDoc.addSnapshotListener { snapshot, error in
             if let error = error {
-                print("Error al escuchar cambios en la sala: \(error.localizedDescription)")
+                print("Error al escuchar cambios en el documento coincidencias: \(error.localizedDescription)")
                 return
             }
             
-            guard let document = document, document.exists else {
-                print("El documento de la sala no existe.")
+            guard let snapshot = snapshot, snapshot.exists else {
+                print("El documento con el código de sala '\(salaCodigo)' no existe.")
                 return
             }
             
-            let data = document.data() ?? [:]
-            let creatorId = data["creadorID"] as? String
+            let data = snapshot.data() ?? [:]
             
-            // Aquí podrías realizar una lógica adicional cuando el código de la sala se actualiza
-            // o se detecten cambios en el documento de la sala.
-            print("Sala actualizada con ID de creador: \(creatorId ?? "Desconocido")")
+            // Verificar si existe el campo "match" y si contiene datos
+            if let match = data["match"] as? [Int], !match.isEmpty {
+                print("Matches encontrados: \(match)")
+                
+                // Mostrar un alert con el mensaje "Nuevo Match"
+                self.showMatchAlert(viewController: UIApplication.shared.windows.first?.rootViewController)
+            } else {
+                print("No se encontraron matches en el documento.")
+            }
+        }
+    }
+
+
+
+
+    // Mostrar un alert con el mensaje de "Nuevo Match"
+    private func showMatchAlert(viewController: UIViewController?) {
+        // Crear un alert controller con el mensaje
+        let alert = UIAlertController(title: "Match", message: "¡Nuevo Match en la sala!", preferredStyle: .alert)
+        
+        // Agregar un botón para cerrar el alert
+        alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+        
+        // Verificar si la vista está disponible antes de mostrar la alerta
+        if let viewController = viewController {
+            // Presentar el alert
+            viewController.present(alert, animated: true, completion: nil)
+        } else {
+            print("No se pudo presentar el alert porque no hay un view controller disponible.")
         }
     }
 
@@ -607,22 +640,24 @@ struct MovieListView: View {
                     return
                 }
                 
-                var coincidencesList = document?.data()?["coincidencias"] as? [Int] ?? []
+                // Cambiado el nombre del campo de "coincidencias" a "match"
+                var matchList = document?.data()?["match"] as? [Int] ?? []
                 
                 // Si la coincidencia ya está registrada, no hacer nada
-                if coincidencesList.contains(movieId) {
+                if matchList.contains(movieId) {
                     print("La coincidencia ya está registrada.")
                     return
                 }
                 
                 // Agregar la nueva coincidencia
-                coincidencesList.append(movieId)
+                matchList.append(movieId)
                 
-                coincidenciasDoc.setData(["coincidencias": coincidencesList], merge: true) { error in
+                // Actualizar el documento con el campo "match"
+                coincidenciasDoc.setData(["match": matchList], merge: true) { error in
                     if let error = error {
-                        print("Error al actualizar coincidencias: \(error.localizedDescription)")
+                        print("Error al actualizar match: \(error.localizedDescription)")
                     } else {
-                        print("Coincidencia registrada correctamente.")
+                        print("Match registrado correctamente.")
                         
                         // Enviar mensaje de match a ambos usuarios
                         self.sendMatchMessage(
@@ -638,6 +673,7 @@ struct MovieListView: View {
             print("No hay coincidencia para esta película.")
         }
     }
+
 
 
     private func sendMatchMessage(creatorId: String?, userId: String?, movieId: Int, codigoSala: String?) {
@@ -657,8 +693,7 @@ struct MovieListView: View {
         
         // Actualizar el array de mensajes en la sala
         salaDoc.updateData([
-            "mensajes": FieldValue.arrayUnion([message]),
-            "usuariosConectados": FieldValue.arrayUnion([creatorId, userId]) // Asegúrate de agregar los usuarios conectados
+            "mensajes": FieldValue.arrayUnion([message])
         ]) { error in
             if let error = error {
                 print("Error al enviar mensaje a la sala: \(error.localizedDescription)")
@@ -712,7 +747,7 @@ struct MovieListView: View {
                 print("Mensajes recibidos: \(mensajes)")
                 
                 // Mostrar un alert con el mensaje "Match"
-                showMatchAlert(viewController: viewController)
+                self.showMatchAlert(viewController: viewController)
             } else {
                 print("No se encontraron mensajes en la sala.")
             }
