@@ -26,7 +26,7 @@ struct ProyectoDAMIICiberMatchApp: App {
   var body: some Scene {
     WindowGroup {
       NavigationView {
-          LoginView()
+         HomeView()
       }
     }
   }

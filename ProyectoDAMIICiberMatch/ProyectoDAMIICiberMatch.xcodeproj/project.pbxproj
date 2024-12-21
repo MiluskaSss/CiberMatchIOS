@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		B702F4C22D11A84A0018D52C /* MensajeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B702F4C12D11A84A0018D52C /* MensajeService.swift */; };
 		B702F4C42D11A8D00018D52C /* Mensaje.swift in Sources */ = {isa = PBXBuildFile; fileRef = B702F4C32D11A8D00018D52C /* Mensaje.swift */; };
+		B70FB3592D17262A00C2E470 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B70FB3582D17262A00C2E470 /* HomeView.swift */; };
 		B79486302CFB5B3F0085C202 /* ProyectoDAMIICiberMatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B794862F2CFB5B3F0085C202 /* ProyectoDAMIICiberMatchApp.swift */; };
 		B79486322CFB5B3F0085C202 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B79486312CFB5B3F0085C202 /* ContentView.swift */; };
 		B79486342CFB5B400085C202 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B79486332CFB5B400085C202 /* Assets.xcassets */; };
@@ -63,6 +64,7 @@
 /* Begin PBXFileReference section */
 		B702F4C12D11A84A0018D52C /* MensajeService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MensajeService.swift; sourceTree = "<group>"; };
 		B702F4C32D11A8D00018D52C /* Mensaje.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Mensaje.swift; sourceTree = "<group>"; };
+		B70FB3582D17262A00C2E470 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		B794862C2CFB5B3F0085C202 /* ProyectoDAMIICiberMatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ProyectoDAMIICiberMatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B794862F2CFB5B3F0085C202 /* ProyectoDAMIICiberMatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProyectoDAMIICiberMatchApp.swift; sourceTree = "<group>"; };
 		B79486312CFB5B3F0085C202 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -176,6 +178,7 @@
 				B79486492CFB5BFE0085C202 /* LoginView.swift */,
 				B794864C2CFB5C1C0085C202 /* RegisterView.swift */,
 				B7C2B2002CFF33DC0021F0EE /* SalaView.swift */,
+				B70FB3582D17262A00C2E470 /* HomeView.swift */,
 			);
 			path = view;
 			sourceTree = "<group>";
@@ -327,6 +330,7 @@
 				B794864A2CFB5BFE0085C202 /* LoginView.swift in Sources */,
 				B702F4C42D11A8D00018D52C /* Mensaje.swift in Sources */,
 				B79486392CFB5B400085C202 /* Persistence.swift in Sources */,
+				B70FB3592D17262A00C2E470 /* HomeView.swift in Sources */,
 				B79486322CFB5B3F0085C202 /* ContentView.swift in Sources */,
 				B702F4C22D11A84A0018D52C /* MensajeService.swift in Sources */,
 				B794869A2CFB5F990085C202 /* APIResponse.swift in Sources */,
