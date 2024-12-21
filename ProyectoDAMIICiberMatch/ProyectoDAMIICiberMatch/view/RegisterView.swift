@@ -69,7 +69,7 @@ struct RegisterView: View {
                             .padding(.horizontal)
                             .autocapitalization(.none)
                             .textInputAutocapitalization(.never)
-                            .foregroundColor(.white)
+                            .foregroundColor(Color.white.opacity(0.9)) // Color más fuerte para el texto
                         
                         // Email
                         TextField("Correo electrónico", text: $username)
@@ -79,7 +79,7 @@ struct RegisterView: View {
                             .autocapitalization(.none)
                             .keyboardType(.emailAddress)
                             .textInputAutocapitalization(.never)
-                            .foregroundColor(.white)
+                            .foregroundColor(Color.white.opacity(0.9)) // Color más fuerte para el texto
                         
                         // Contraseña
                         ZStack {
@@ -88,12 +88,22 @@ struct RegisterView: View {
                                     TextField("Contraseña", text: $password)
                                         .padding()
                                         .frame(height: 50)
-                                        .foregroundColor(.white)
+                                        .foregroundColor(Color.white.opacity(0.9)) // Color más fuerte para el texto
+                                        .onChange(of: password) { newValue in
+                                            if newValue.count > 10 {
+                                                password = String(newValue.prefix(10)) // Limitar a 10 caracteres
+                                            }
+                                        }
                                 } else {
                                     SecureField("Contraseña", text: $password)
                                         .padding()
                                         .frame(height: 50)
-                                        .foregroundColor(.white)
+                                        .foregroundColor(Color.white.opacity(0.9)) // Color más fuerte para el texto
+                                        .onChange(of: password) { newValue in
+                                            if newValue.count > 10 {
+                                                password = String(newValue.prefix(10)) // Limitar a 10 caracteres
+                                            }
+                                        }
                                 }
 
                                 Button(action: {
@@ -158,6 +168,12 @@ struct RegisterView: View {
             return
         }
         
+        // Validar que la contraseña tenga entre 6 y 10 caracteres
+        guard password.count >= 6 && password.count <= 10 else {
+            errorMessage = "La contraseña debe tener entre 6 y 10 caracteres."
+            return
+        }
+        
         isRegistering = true
         errorMessage = ""
         
@@ -208,3 +224,4 @@ struct LoginFormView: View {
 #Preview {
     RegisterView()
 }
+
