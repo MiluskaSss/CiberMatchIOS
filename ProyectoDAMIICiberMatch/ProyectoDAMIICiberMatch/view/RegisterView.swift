@@ -1,10 +1,3 @@
-//
-//  RegisterView.swift
-//  ProyectoDAMIICiberMatch
-//
-//  Created by DAMII on 30/11/24.
-//
-
 import SwiftUI
 import FirebaseAuth
 import FirebaseFirestore
@@ -17,78 +10,145 @@ struct RegisterView: View {
     @State private var errorMessage: String = ""
     @State private var isRegistering: Bool = false
     @State private var showSuccessAlert: Bool = false // Para controlar la alerta de éxito
+    @State private var showLoginView: Bool = false // Controla la navegación hacia el login
+    @State private var showPassword: Bool = false // Controla la visibilidad de la contraseña
     
     private let db = Firestore.firestore() // Instancia de Firestore
     
     var body: some View {
-        VStack(spacing: 20) {
-            Text("¡Bienvenido a MealsApp!")
-                .font(.largeTitle)
-                .fontWeight(.bold)
-            
-            // Nombre de usuario
-            TextField("Nombre de usuario", text: $displayName)
-                .padding()
-                .background(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.gray, lineWidth: 1))
-                .padding(.horizontal)
-                .autocapitalization(.none)
-                .textInputAutocapitalization(.never)
-            
-            // Email
-            TextField("Correo electrónico", text: $username)
-                .padding()
-                .background(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.gray, lineWidth: 1))
-                .padding(.horizontal)
-                .autocapitalization(.none)
-                .keyboardType(.emailAddress)
-                .textInputAutocapitalization(.never)
-            
-            // Password
-            SecureField("Contraseña", text: $password)
-                .padding()
-                .background(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.gray, lineWidth: 1))
-                .padding(.horizontal)
-            
-            // Error message
-            if !errorMessage.isEmpty {
-                Text(errorMessage)
-                    .foregroundColor(.red)
-                    .padding(.top, 10)
-            }
-            
-            // Botón de registro
-            Button(action: registerUser) {
-                Text(isRegistering ? "Registrando..." : "Crear cuenta")
-                    .foregroundColor(.white)
-                    .padding()
-                    .background(Color.blue)
-                    .cornerRadius(10)
-                    .padding(.horizontal)
-            }
-            .disabled(isRegistering || username.isEmpty || password.isEmpty || displayName.isEmpty)
-            
-            // Cambio a login
-            HStack {
-                Text("¿Ya tienes cuenta?")
-                Button(action: {
-                    // Lógica para cambiar a la vista de login
-                }) {
-                    Text("Inicia sesión")
-                        .foregroundColor(.blue)
-                        .fontWeight(.bold)
+        VStack {
+            if showLoginView {
+                // Vista de Login
+                LoginView() // Aquí debes tener la vista de login que quieres mostrar
+            } else {
+                // Vista de Registro
+                ZStack {
+                    // Fondo degradado de negro a morado
+                    LinearGradient(
+                        gradient: Gradient(colors: [Color.black, Color.purple]),
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .edgesIgnoringSafeArea(.all)
+                    
+                    VStack(spacing: 20) {
+                        Spacer() // Esto asegura que el contenido se centre verticalmente
+                        
+                        Text("¡CineMatch!")
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+                            .foregroundColor(.white)
+
+                        // Ícono debajo del título
+                        ZStack {
+                            Image(systemName: "person.fill")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 70, height: 70)
+                                .foregroundColor(.white)
+                            
+                            Image(systemName: "plus.circle.fill")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 30, height: 30)
+                                .foregroundColor(.purple)
+                                .offset(x: 35, y: -35)
+                        }
+                        
+                        // Subtítulo
+                        Text("Regístrate en CineMatch, descubre sus increíbles funciones y vive una experiencia única llena de creatividad y entretenimiento.")
+                            .font(.system(size: 16))
+                            .multilineTextAlignment(.center)
+                            .foregroundColor(Color.gray)
+                            .padding(.horizontal, 30)
+                        
+                        // Nombre de usuario
+                        TextField("Nombre de usuario", text: $displayName)
+                            .padding()
+                            .background(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.white, lineWidth: 1))
+                            .padding(.horizontal)
+                            .autocapitalization(.none)
+                            .textInputAutocapitalization(.never)
+                            .foregroundColor(.white)
+                        
+                        // Email
+                        TextField("Correo electrónico", text: $username)
+                            .padding()
+                            .background(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.white, lineWidth: 1))
+                            .padding(.horizontal)
+                            .autocapitalization(.none)
+                            .keyboardType(.emailAddress)
+                            .textInputAutocapitalization(.never)
+                            .foregroundColor(.white)
+                        
+                        // Contraseña
+                        ZStack {
+                            HStack {
+                                if showPassword {
+                                    TextField("Contraseña", text: $password)
+                                        .padding()
+                                        .frame(height: 50)
+                                        .foregroundColor(.white)
+                                } else {
+                                    SecureField("Contraseña", text: $password)
+                                        .padding()
+                                        .frame(height: 50)
+                                        .foregroundColor(.white)
+                                }
+
+                                Button(action: {
+                                    showPassword.toggle()
+                                }) {
+                                    Image(systemName: showPassword ? "eye.slash.fill" : "eye.fill")
+                                        .foregroundColor(.white)
+                                }
+                                .padding(.trailing, 15)
+                            }
+                            .background(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.white, lineWidth: 1))
+                            .padding(.horizontal)
+                        }
+                        
+                        if !errorMessage.isEmpty {
+                            Text(errorMessage)
+                                .foregroundColor(.red)
+                                .padding(.top, 10)
+                        }
+                        
+                        Button(action: registerUser) {
+                            Text(isRegistering ? "Registrando..." : "Crear cuenta")
+                                .foregroundColor(.white)
+                                .padding()
+                                .background(Color.blue)
+                                .cornerRadius(10)
+                                .padding(.horizontal)
+                        }
+                        .disabled(isRegistering || username.isEmpty || password.isEmpty || displayName.isEmpty)
+                        
+                        HStack {
+                            Text("¿Ya tienes cuenta?")
+                                .foregroundColor(.white)
+                            Button(action: {
+                                showLoginView = true
+                            }) {
+                                Text("Inicia sesión")
+                                    .foregroundColor(.blue)
+                                    .fontWeight(.bold)
+                            }
+                        }
+                        .padding(.top, 20)
+                        
+                        Spacer()
+                    }
+                    .padding(.top, 50)
+                    .alert(isPresented: $showSuccessAlert) {
+                        Alert(
+                            title: Text("Registro exitoso"),
+                            message: Text("¡Tu cuenta ha sido creada con éxito!"),
+                            dismissButton: .default(Text("OK"))
+                        )
+                    }
                 }
             }
-            .padding(.top, 20)
-            
-            Spacer()
-        }
-        .padding(.top, 50)
-        .alert(isPresented: $showSuccessAlert) { // Alerta de éxito
-            Alert(
-                title: Text("Registro exitoso"),
-                message: Text("¡Tu cuenta ha sido creada con éxito!"),
-                dismissButton: .default(Text("OK"))
-            )
         }
     }
     
@@ -125,9 +185,23 @@ struct RegisterView: View {
                 errorMessage = "Error al guardar el usuario: \(error.localizedDescription)"
             } else {
                 print("Usuario guardado correctamente en Firestore.")
-                showSuccessAlert = true // Mostrar alerta de éxito
+                showSuccessAlert = true
             }
         }
+    }
+}
+
+// Vista de Login
+struct LoginFormView: View {
+    var body: some View {
+        VStack {
+            Text("Iniciar sesión")
+                .font(.largeTitle)
+                .fontWeight(.bold)
+            Spacer()
+        }
+        .navigationTitle("LoginView")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
